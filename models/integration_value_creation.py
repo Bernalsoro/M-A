@@ -198,7 +198,9 @@ class IntegrationValueCreation:
             'total_synergies': {
                 'target': cost_synergy_target + revenue_synergy_target,
                 'run_rate_achieved': cost_run_rate + revenue_run_rate,
-                'realized_to_date': cost_realized + revenue_realized
+                'realized_to_date': cost_realized + revenue_realized,
+                'pct_of_target': (cost_run_rate + revenue_run_rate) / (cost_synergy_target + revenue_synergy_target)
+                    if (cost_synergy_target + revenue_synergy_target) > 0 else 0
             },
             'integration_costs': {
                 'budget': self.integration_costs,
