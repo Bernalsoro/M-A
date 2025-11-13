@@ -94,6 +94,60 @@ multiples.add_comparable("Comp B", ev=1500, ebitda=150, revenue=750)
 valuation = multiples.calculate_valuation(target_ebitda=120, target_revenue=600)
 ```
 
+## 🎯 Caso Completo: Análisis de Nvidia
+
+**¿Quieres ver las herramientas en acción?** Hemos creado un análisis completo de Nvidia aplicando las 8 herramientas:
+
+### 📓 Jupyter Notebook Interactivo (RECOMENDADO)
+
+**Archivo:** `examples/nvidia_analysis_storytelling.ipynb`
+
+- ✅ **8 gráficas profesionales pre-renderizadas**
+- ✅ **Storytelling format** - Narrativa que explica cada paso
+- ✅ **Análisis completo** - DCF, Comps, Ratios, Due Diligence, todo
+- ✅ **Listo para ver** - Sin necesidad de ejecutar código
+- ✅ **Interactivo** - Modifica assumptions y re-ejecuta
+
+**Cómo verlo:**
+```bash
+# Opción 1: GitHub (si el repo es público)
+# Simplemente navega al archivo en GitHub
+
+# Opción 2: Jupyter Notebook local
+pip install jupyter matplotlib seaborn
+jupyter notebook examples/nvidia_analysis_storytelling.ipynb
+
+# Opción 3: VS Code
+# Instala extensión "Jupyter" y abre el .ipynb
+
+# Opción 4: HTML (sin instalar nada)
+# Abre examples/nvidia_analysis.html en tu navegador
+```
+
+📖 **Ver guía completa:** `examples/COMO_VER_NOTEBOOK.md`
+
+### 📜 Script Python
+
+**Archivo:** `examples/nvidia_case_study.py`
+
+Análisis completo en formato texto con outputs a consola:
+
+```bash
+python examples/nvidia_case_study.py
+```
+
+Genera un reporte de ~1,100 líneas con:
+- DCF valuation con sensitivity
+- Trading comparables (AMD, Intel, Qualcomm, Broadcom, TSMC)
+- Precedent transactions analysis
+- Synergies model ($15B acquisition scenario)
+- Financial ratios (3 años de datos)
+- Due diligence (red flags detection)
+- Post-merger integration (Nvidia-Mellanox case)
+- Executive summary con recomendación de inversión
+
+---
+
 ## 📊 Características Principales
 
 - **Modelos Completos**: Implementación profesional de todos los modelos de valoración M&A
@@ -101,6 +155,7 @@ valuation = multiples.calculate_valuation(target_ebitda=120, target_revenue=600)
 - **Análisis Sensibilidad**: Análisis de sensibilidad integrado en todos los modelos
 - **Documentación**: Código completamente documentado con ejemplos
 - **Validación de Datos**: Validación automática de inputs y outputs
+- **Caso Real Completo**: Análisis de Nvidia con todas las herramientas
 
 ## 📈 Módulos Principales
 
