@@ -1,0 +1,174 @@
+═══════════════════════════════════════════════════════════════════════════
+   CÓMO EJECUTAR EL ANÁLISIS DE NVIDIA - GUÍA RÁPIDA
+═══════════════════════════════════════════════════════════════════════════
+
+❗ IMPORTANTE: El error que tienes es porque no estás ejecutando desde el
+   directorio correcto.
+
+
+█████████████████████████████████████████████████████████████████████████
+  PASO 1: VERIFICAR TU SETUP
+█████████████████████████████████████████████████████████████████████████
+
+Ejecuta este comando primero:
+
+    cd M-A
+    python test_imports.py
+
+Este script te dirá EXACTAMENTE qué está mal (si algo falla).
+
+
+█████████████████████████████████████████████████████████████████████████
+  PASO 2: INSTALAR DEPENDENCIAS (si test_imports.py dice que faltan)
+█████████████████████████████████████████████████████████████████████████
+
+    pip install numpy pandas scipy matplotlib seaborn
+
+O instala todo de una vez:
+
+    pip install -r requirements.txt
+
+
+█████████████████████████████████████████████████████████████████████████
+  PASO 3: EJECUTAR EL ANÁLISIS
+█████████████████████████████████████████████████████████████████████████
+
+Tienes 2 opciones:
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ OPCIÓN A: Análisis Completo (Usa los 8 modelos profesionales)        │
+└───────────────────────────────────────────────────────────────────────┘
+
+    cd M-A
+    python examples/nvidia_case_study.py
+
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ OPCIÓN B: Versión Simple (Todo en 1 archivo, más fácil)              │
+└───────────────────────────────────────────────────────────────────────┘
+
+    cd M-A/examples
+    python nvidia_standalone.py
+
+
+═══════════════════════════════════════════════════════════════════════════
+   ¿POR QUÉ FALLA EL IMPORT?
+═══════════════════════════════════════════════════════════════════════════
+
+El código hace esto:
+
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+
+    from models.dcf import DCFModel  ← Busca en M-A/models/
+
+Esto significa:
+• __file__ = examples/nvidia_case_study.py
+• __file__.parent = examples/
+• __file__.parent.parent = M-A/   ← Añade esto al path
+
+Entonces Python busca:
+• M-A/models/dcf.py  ✅
+• M-A/analysis/financial_ratios.py  ✅
+
+PERO si ejecutas desde otro directorio, Python NO encuentra las carpetas.
+
+
+═══════════════════════════════════════════════════════════════════════════
+   SOLUCIONES AL ERROR
+═══════════════════════════════════════════════════════════════════════════
+
+❌ ERROR: ModuleNotFoundError: No module named 'models'
+
+✅ SOLUCIÓN 1: Ejecuta desde el directorio M-A/
+
+    cd /ruta/completa/a/M-A
+    python examples/nvidia_case_study.py
+
+
+✅ SOLUCIÓN 2: Usa la versión standalone (NO necesita imports)
+
+    cd M-A/examples
+    python nvidia_standalone.py
+
+
+✅ SOLUCIÓN 3: Añade el path manualmente
+
+    export PYTHONPATH=/ruta/a/M-A:$PYTHONPATH  # Linux/Mac
+    set PYTHONPATH=C:\ruta\a\M-A;%PYTHONPATH%  # Windows
+
+    python examples/nvidia_case_study.py
+
+
+═══════════════════════════════════════════════════════════════════════════
+   ESTRUCTURA ESPERADA
+═══════════════════════════════════════════════════════════════════════════
+
+M-A/                                  ← Debes estar AQUÍ
+├── models/                           ← Python busca aquí
+│   ├── dcf.py
+│   ├── multiples.py
+│   ├── synergies.py
+│   └── ...
+├── analysis/                         ← Python busca aquí
+│   ├── financial_ratios.py
+│   └── due_diligence.py
+├── examples/
+│   ├── nvidia_case_study.py          ← Ejecuta: python examples/nvidia_case_study.py
+│   └── nvidia_standalone.py          ← O ejecuta: python nvidia_standalone.py
+├── test_imports.py                   ← Script de verificación
+└── requirements.txt
+
+
+═══════════════════════════════════════════════════════════════════════════
+   COMANDOS PASO A PASO (Copia y Pega)
+═══════════════════════════════════════════════════════════════════════════
+
+# 1. Ir al directorio correcto
+cd M-A
+
+# 2. Verificar que todo está OK
+python test_imports.py
+
+# 3. Si dice que faltan librerías, instalar:
+pip install numpy pandas scipy matplotlib seaborn
+
+# 4. Ejecutar el análisis
+python examples/nvidia_case_study.py
+
+
+═══════════════════════════════════════════════════════════════════════════
+   ¿QUÉ HACE CADA ARCHIVO?
+═══════════════════════════════════════════════════════════════════════════
+
+📄 test_imports.py
+   → Verifica que tu entorno está configurado correctamente
+   → Te dice exactamente qué falta
+
+📄 nvidia_case_study.py
+   → Análisis COMPLETO usando los 8 modelos profesionales
+   → Requiere: models/, analysis/, utils/
+   → Output: ~1,100 líneas de análisis detallado
+
+📄 nvidia_standalone.py
+   → Versión SIMPLE, todo en 1 archivo
+   → NO requiere: models/, analysis/
+   → Mismo análisis pero más compacto
+
+📄 INSTRUCCIONES_EJECUTAR.md
+   → Guía detallada con más opciones
+
+
+═══════════════════════════════════════════════════════════════════════════
+   RESUMEN: 3 COMANDOS Y LISTO
+═══════════════════════════════════════════════════════════════════════════
+
+cd M-A
+pip install numpy pandas scipy matplotlib seaborn
+python examples/nvidia_case_study.py
+
+
+¡Eso es todo! Si tienes problemas, ejecuta primero:
+    python test_imports.py
+
