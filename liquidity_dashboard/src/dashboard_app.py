@@ -29,11 +29,90 @@ st.set_page_config(
 # Rutas de datos
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_PROCESSED = BASE_DIR / "data" / "processed"
+DATA_RAW = BASE_DIR / "data" / "raw"
+
+
+def ensure_data_exists():
+    """Verifica si los datos existen, si no, los genera automáticamente."""
+    liquidity_file = DATA_PROCESSED / "liquidity_data.csv"
+
+    if not liquidity_file.exists():
+        st.info("🔄 Primera carga: generando datos... Esto tomará 2-3 minutos.")
+
+        # Crear directorios si no existen
+        DATA_RAW.mkdir(parents=True, exist_ok=True)
+        DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
+
+        with st.spinner("Descargando datos de FRED y mercados..."):
+            try:
+                # Importar funciones de actualización
+                from fetch_fred import fetch_all_fred_series, calculate_net_liquidity
+                from fetch_market import fetch_market_prices, resample_to_weekly
+                from indicators import build_liquidity_index, generate_liquidity_signals, calculate_liquidity_regime
+                from config import START_DATE, YFINANCE_PERIOD, YFINANCE_INTERVAL
+
+                # Descargar datos de FRED
+                fred_df = fetch_all_fred_series(start_date=START_DATE)
+                fred_df.to_csv(DATA_RAW / "fred_series.csv")
+
+                # Descargar precios de mercado
+                market_df = fetch_market_prices(period=YFINANCE_PERIOD, interval=YFINANCE_INTERVAL)
+                market_df.to_csv(DATA_RAW / "market_prices.csv")
+
+                # Calcular liquidez neta
+                try:
+                    net_liquidity = calculate_net_liquidity(fred_df)
+                    fred_df['net_liquidity'] = net_liquidity
+                except Exception as e:
+                    st.warning(f"No se pudo calcular liquidez neta: {str(e)}")
+
+                # Construir índice de liquidez
+                liquidity_index = build_liquidity_index(fred_df)
+                fred_df['liquidity_index'] = liquidity_index
+
+                # Generar señales y régimen
+                signals = generate_liquidity_signals(liquidity_index)
+                regime = calculate_liquidity_regime(liquidity_index)
+                fred_df['liquidity_signal'] = signals
+                fred_df['liquidity_regime'] = regime
+
+                # Resamplear market data a semanal
+                market_weekly = resample_to_weekly(market_df)
+
+                # Guardar datos procesados
+                fred_df.to_csv(DATA_PROCESSED / "liquidity_data.csv")
+                market_df.to_csv(DATA_PROCESSED / "market_prices.csv")
+                market_weekly.to_csv(DATA_PROCESSED / "market_prices_weekly.csv")
+
+                # Crear resumen
+                summary = {
+                    "metric": ["Última fecha (FRED)", "Última fecha (Market)", "Fed Assets (última)",
+                              "Liquidity Index (z-score)", "Régimen"],
+                    "value": [
+                        fred_df.index[-1].strftime("%Y-%m-%d"),
+                        market_df.index[-1].strftime("%Y-%m-%d"),
+                        f"${fred_df['fed_total_assets'].iloc[-1]:,.0f}M",
+                        f"{liquidity_index.iloc[-1]:.2f}",
+                        regime.iloc[-1],
+                    ]
+                }
+                summary_df = pd.DataFrame(summary)
+                summary_df.to_csv(DATA_PROCESSED / "summary.csv", index=False)
+
+                st.success("✅ Datos generados exitosamente!")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"❌ Error generando datos: {str(e)}")
+                st.stop()
 
 
 @st.cache_data(ttl=3600)  # Cache por 1 hora
 def load_data():
     """Carga los datos procesados."""
+    # Asegurar que los datos existan
+    ensure_data_exists()
+
     try:
         liquidity = pd.read_csv(
             DATA_PROCESSED / "liquidity_data.csv",
@@ -59,8 +138,7 @@ def load_data():
 
     except FileNotFoundError:
         st.error(
-            "❌ No se encontraron datos. Por favor ejecuta primero:\n"
-            "`python src/update_data.py`"
+            "❌ Error cargando datos."
         )
         st.stop()
 
