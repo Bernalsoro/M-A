@@ -309,11 +309,11 @@ def main():
     # Filtrar por fechas
     if len(date_range) == 2:
         start_date, end_date = date_range
-        # Convertir a pandas Timestamp para compatibilidad con índices timezone-aware
-        start_date = pd.Timestamp(start_date)
-        end_date = pd.Timestamp(end_date)
-        liquidity = liquidity.loc[start_date:end_date]
-        market_weekly = market_weekly.loc[start_date:end_date]
+        # Convertir a string para evitar problemas con timezone
+        start_str = start_date.strftime("%Y-%m-%d")
+        end_str = end_date.strftime("%Y-%m-%d")
+        liquidity = liquidity.loc[start_str:end_str]
+        market_weekly = market_weekly.loc[start_str:end_str]
 
     # Métricas principales
     st.header("📈 Key Metrics")
