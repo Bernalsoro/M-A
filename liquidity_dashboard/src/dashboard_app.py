@@ -309,6 +309,9 @@ def main():
     # Filtrar por fechas
     if len(date_range) == 2:
         start_date, end_date = date_range
+        # Convertir a pandas Timestamp para compatibilidad con índices timezone-aware
+        start_date = pd.Timestamp(start_date)
+        end_date = pd.Timestamp(end_date)
         liquidity = liquidity.loc[start_date:end_date]
         market_weekly = market_weekly.loc[start_date:end_date]
 
