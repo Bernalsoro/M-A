@@ -132,6 +132,14 @@ def load_data():
             index_col="date"
         )
 
+        # Remover timezone info de los índices para evitar conflictos
+        if hasattr(liquidity.index, 'tz') and liquidity.index.tz is not None:
+            liquidity.index = liquidity.index.tz_localize(None)
+        if hasattr(market_daily.index, 'tz') and market_daily.index.tz is not None:
+            market_daily.index = market_daily.index.tz_localize(None)
+        if hasattr(market_weekly.index, 'tz') and market_weekly.index.tz is not None:
+            market_weekly.index = market_weekly.index.tz_localize(None)
+
         summary = pd.read_csv(DATA_PROCESSED / "summary.csv")
 
         return liquidity, market_daily, market_weekly, summary
