@@ -7,8 +7,18 @@ para el análisis de liquidez global.
 
 import os
 
-# API Keys (se pueden configurar como variables de entorno)
-FRED_API_KEY = os.getenv("FRED_API_KEY", "")  # Obtener desde https://fred.stlouisfed.org/docs/api/api_key.html
+# Intentar importar streamlit para leer secrets (cuando está deployado)
+try:
+    import streamlit as st
+    # Si estamos en Streamlit Cloud, usar secrets
+    if hasattr(st, 'secrets') and 'FRED_API_KEY' in st.secrets:
+        FRED_API_KEY = st.secrets['FRED_API_KEY']
+    else:
+        # Si no, usar variable de entorno
+        FRED_API_KEY = os.getenv("FRED_API_KEY", "")
+except (ImportError, FileNotFoundError):
+    # Si streamlit no está disponible o no hay secrets, usar variable de entorno
+    FRED_API_KEY = os.getenv("FRED_API_KEY", "")
 
 # Series de FRED (Federal Reserve Economic Data)
 # Estas series representan los componentes clave de liquidez del sistema
