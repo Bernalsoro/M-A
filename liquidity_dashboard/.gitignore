@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data files (optional - puedes descomentar si NO quieres versionar los CSVs)
+# data/raw/*.csv
+# data/processed/*.csv
+
+# Pero sí queremos mantener metadata de actualización
+!data/processed/update_metadata.csv
+!data/processed/summary.csv
+
+# Environment variables
+.env
+.env.local
+
+# Streamlit
+.streamlit/secrets.toml
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log

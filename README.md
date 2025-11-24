@@ -18,6 +18,15 @@ Herramientas profesionales de valoración para Fusiones y Adquisiciones (M&A).
 7. **Análisis de Ratios Financieros** - KPIs clave para M&A (ROIC, WACC, márgenes, etc.)
 8. **Modelo de Integración y Creación de Valor** - Tracking de value creation post-merger
 
+### 🌍 **NUEVO: Global Liquidity Dashboard**
+9. **Dashboard de Liquidez Global** - Monitoreo en tiempo real de liquidez del sistema financiero con actualización automática diaria
+   - Rastrea Fed Balance Sheet, M2, Bank Reserves, TGA, Reverse Repo
+   - Calcula índice compuesto de liquidez y correlación con mercados
+   - Señales de trading automáticas basadas en regímenes de liquidez
+   - Dashboard web interactivo con Streamlit
+   - **Actualización diaria automática** via GitHub Actions
+   - 📖 [Ver documentación completa](liquidity_dashboard/README.md)
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -36,6 +45,18 @@ M-A/
 │   ├── wacc.py         # Cálculo WACC
 │   ├── terminal_value.py
 │   └── data_validation.py
+├── liquidity_dashboard/ # 🌍 NUEVO: Dashboard de Liquidez Global
+│   ├── src/            # Código fuente
+│   │   ├── config.py           # Configuración APIs
+│   │   ├── fetch_fred.py       # Datos de Fed Reserve
+│   │   ├── fetch_market.py     # Datos de mercado
+│   │   ├── indicators.py       # Índice de liquidez
+│   │   ├── update_data.py      # Script actualización
+│   │   └── dashboard_app.py    # Dashboard Streamlit
+│   ├── data/           # Datos (actualizados diariamente)
+│   │   ├── raw/        # Datos brutos
+│   │   └── processed/  # Datos procesados
+│   └── README.md       # Documentación completa
 ├── examples/           # Ejemplos de uso
 └── tests/             # Tests unitarios
 ```
