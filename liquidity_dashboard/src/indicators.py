@@ -8,8 +8,8 @@ series de datos de la Fed y otros indicadores económicos.
 import pandas as pd
 import numpy as np
 from typing import Optional, List
-from .transform import rolling_zscore, normalize_series
-from .config import ROLLING_WINDOW
+from transform import rolling_zscore, normalize_series
+from config import ROLLING_WINDOW
 
 
 def build_liquidity_index(

@@ -9,7 +9,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional
-from .config import FRED_API_KEY, FRED_SERIES, START_DATE, FRED_FREQUENCY
+from config import FRED_API_KEY, FRED_SERIES, START_DATE, FRED_FREQUENCY
 
 BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 

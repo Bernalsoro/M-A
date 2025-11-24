@@ -9,7 +9,7 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 from typing import Optional
-from .config import MARKET_TICKERS, YFINANCE_PERIOD, YFINANCE_INTERVAL
+from config import MARKET_TICKERS, YFINANCE_PERIOD, YFINANCE_INTERVAL
 
 
 def fetch_ticker_data(

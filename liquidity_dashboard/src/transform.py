@@ -8,7 +8,7 @@ z-scores y otras transformaciones útiles para análisis financiero.
 import pandas as pd
 import numpy as np
 from typing import Optional
-from .config import ROLLING_WINDOW, YOY_PERIODS
+from config import ROLLING_WINDOW, YOY_PERIODS
 
 
 def yoy_change(series: pd.Series, periods: int = YOY_PERIODS) -> pd.Series:
