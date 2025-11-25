@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import os
 import base64
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
 
 # ---------- CONFIGURACIÓN DE LA PÁGINA ----------
@@ -208,6 +210,81 @@ def display_case_files(case_folder, case_name):
                 except Exception as e:
                     st.warning(f"Cannot preview this PDF: {str(e)}")
                     st.markdown("Click **Download** to view the PDF locally.")
+
+
+def analyze_excel_and_plot(case_folder):
+    """Automatically analyze Excel files and generate relevant charts."""
+    case_path = Path("case_studies") / case_folder
+    excel_files = []
+
+    # Get all Excel files
+    for ext in ["*.xlsx", "*.xls"]:
+        excel_files.extend(list(case_path.glob(ext)))
+
+    if not excel_files:
+        return
+
+    st.markdown("---")
+    st.markdown("### 📊 Automated Data Analysis")
+
+    for excel_file in excel_files[:2]:  # Limit to first 2 files to avoid clutter
+        try:
+            # Read all sheets
+            xls = pd.ExcelFile(excel_file)
+
+            # Try to find sheets with numerical data
+            for sheet_name in xls.sheet_names[:3]:  # Analyze first 3 sheets
+                try:
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+                    # Skip if too small
+                    if len(df) < 3 or len(df.columns) < 2:
+                        continue
+
+                    # Find numerical columns
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+
+                    if len(numeric_cols) >= 2:
+                        st.markdown(f"**{excel_file.name}** - {sheet_name}")
+
+                        # Create figure with subplots
+                        fig, axes = plt.subplots(1, min(2, len(numeric_cols)), figsize=(12, 4))
+                        if len(numeric_cols) == 1:
+                            axes = [axes]
+
+                        # Plot first few numeric columns
+                        for idx, col in enumerate(numeric_cols[:2]):
+                            if len(numeric_cols) > 1:
+                                ax = axes[idx]
+                            else:
+                                ax = axes[0]
+
+                            # Line chart if looks like time series, bar chart otherwise
+                            if len(df) < 20:
+                                df[col].plot(kind='bar', ax=ax, color='#003366')
+                                ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+                            else:
+                                df[col].plot(kind='line', ax=ax, color='#003366', linewidth=2)
+
+                            ax.set_title(col, fontsize=10, fontweight='bold')
+                            ax.grid(True, alpha=0.3)
+                            ax.set_xlabel('')
+
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        plt.close()
+
+                        # Show summary stats
+                        with st.expander("📈 Summary Statistics"):
+                            st.dataframe(df[numeric_cols].describe().T.style.format("{:.2f}"))
+
+                        break  # Only show one sheet per file
+
+                except Exception as e:
+                    continue
+
+        except Exception as e:
+            continue
 
 
 # ---------- SIDEBAR / NAVEGACIÓN ----------
@@ -507,7 +584,7 @@ elif page == "Case Studies":
         """
     )
 
-    tab1, tab2, tab3 = st.tabs(["Energy & Commodities", "Private Education", "Other Transactions"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Energy & Commodities", "Private Education", "Nuclear Policy", "Other Transactions"])
 
     with tab1:
         st.subheader("ExxonMobil – Fundamental DCF & Scenario Analysis")
@@ -532,6 +609,9 @@ elif page == "Case Studies":
 
         # Display case files
         display_case_files("exxon", "ExxonMobil")
+
+        # Automated analysis and charts
+        analyze_excel_and_plot("exxon")
 
     with tab2:
         st.subheader("Mondragón University – Private Education Sell-Side Case")
@@ -560,7 +640,45 @@ elif page == "Case Studies":
         # Display case files
         display_case_files("mondragon", "Mondragón University")
 
+        # Automated analysis and charts
+        analyze_excel_and_plot("mondragon")
+
     with tab3:
+        st.subheader("Nuclear Energy Policy Impact Analysis")
+        st.markdown(
+            """
+            **Strategic Context**
+            - Comparative policy analysis: Spanish nuclear phase-out vs French nuclear expansion strategy
+            - Quantitative assessment of industrial electricity cost implications
+            - Impact on Spanish metal sector international competitiveness
+
+            **Sectoral Analysis**
+            - Steel and aluminum production cost structure breakdown
+            - Competitive positioning vs European peers (France, Germany)
+            - Energy-intensive industry margin pressure analysis
+            - Long-term investment flow implications for Spanish industrial base
+
+            **Analytical Framework**
+            - Energy cost modeling under divergent policy scenarios
+            - Metal producer margin sensitivity to electricity price differentials
+            - Industrial policy implications and strategic recommendations
+            - Cross-border competitiveness gap quantification
+
+            **Key Insights**
+            - Nuclear phase-out creates structural cost disadvantage for energy-intensive sectors
+            - French policy provides sustained competitive advantage in industrial production
+            - Policy divergence drives potential industrial relocation pressures
+            - Strategic implications for Spain's industrial manufacturing base
+            """
+        )
+
+        st.markdown("---")
+        display_case_files("nuclear_spain", "Nuclear Spain Analysis")
+
+        # Automated analysis and charts
+        analyze_excel_and_plot("nuclear_spain")
+
+    with tab4:
         st.subheader("Additional Transaction Experience")
         st.markdown(
             """
@@ -591,28 +709,8 @@ elif page == "Case Studies":
         st.markdown("#### Cirsa - Gaming & Leisure Sector")
         display_case_files("cirsa", "Cirsa")
 
-        # Display case files for Nuclear Spain
-        st.markdown("---")
-        st.markdown("#### Nuclear Energy Policy Impact - Spain Industrial Competitiveness")
-        st.markdown(
-            """
-            **Policy Analysis Framework**
-            - Comparative analysis: Spanish nuclear phase-out vs French nuclear expansion
-            - Impact on industrial electricity costs and metal sector competitiveness
-            - Quantitative assessment of energy price differentials
-
-            **Sectoral Impact**
-            - Steel and aluminum production cost structure analysis
-            - Competitive positioning of Spanish metal producers vs European peers
-            - Long-term implications for industrial policy and investment flows
-
-            **Methodology**
-            - Energy cost modeling under different policy scenarios
-            - Sensitivity analysis on metal producer margins
-            - Strategic recommendations for sector stakeholders
-            """
-        )
-        display_case_files("nuclear_spain", "Nuclear Spain Analysis")
+        # Automated analysis and charts
+        analyze_excel_and_plot("cirsa")
 
 
 # --- CONTACT ---
