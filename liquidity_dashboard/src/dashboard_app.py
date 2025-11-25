@@ -432,15 +432,49 @@ def main():
         st.header("ℹ️ About")
         st.markdown(
             """
-            This dashboard tracks global liquidity conditions
-            using Federal Reserve data and market indicators.
+            ### 🌍 Global Liquidity Dashboard
 
-            **Liquidity Index**: Composite z-score of Fed assets,
-            bank reserves, and M2 money supply.
+            Este dashboard monitorea las **condiciones de liquidez global**
+            y su impacto en los mercados financieros.
 
-            **Data Sources**:
-            - FRED (Federal Reserve Economic Data)
-            - Yahoo Finance (Market prices)
+            ### 🎯 ¿Por qué es importante?
+
+            La liquidez de los bancos centrales (especialmente la Fed) es
+            uno de los **drivers principales** de los mercados:
+
+            - 📈 **Más liquidez** → Activos suben (acciones, cripto, oro)
+            - 📉 **Menos liquidez** → Activos bajan (correcciones, bear markets)
+
+            ### 🔢 ¿Qué mide el Liquidity Index?
+
+            Índice compuesto (z-score) que combina:
+            1. **Fed Total Assets** (Balance de la Reserva Federal)
+            2. **Bank Reserves** (Reservas en bancos comerciales)
+            3. **M2 Money Supply** (Oferta monetaria total)
+
+            ### 📊 Fuentes de Datos
+
+            - **FRED** (Federal Reserve Economic Data)
+              - Datos oficiales de la Fed
+              - Actualización semanal
+            - **Yahoo Finance**
+              - Precios de mercado (S&P 500, Bitcoin, oro, etc.)
+              - Actualización diaria
+
+            ### 🔄 Actualización
+
+            Los datos se actualizan **automáticamente cada día**
+            a las 02:00 UTC via GitHub Actions.
+
+            ### 💡 Cómo usar este dashboard
+
+            1. **Key Metrics**: Ve el régimen actual de liquidez
+            2. **Liquidity vs Market**: Compara liquidez con mercado
+            3. **Fed Components**: Analiza componentes del balance
+            4. **Liquidity Regime**: Identifica el régimen histórico
+            5. **Market Overview**: Compara diferentes activos
+
+            **Cada gráfico tiene un botón** ℹ️ con explicaciones detalladas.
             """
         )
 
@@ -515,6 +549,43 @@ def main():
     ])
 
     with tab1:
+        # Explicación del gráfico
+        with st.expander("ℹ️ Cómo interpretar este gráfico"):
+            st.markdown("""
+            ### 📊 ¿Qué muestra este gráfico?
+
+            Compara la **liquidez global** con el rendimiento del **mercado de valores** (S&P 500, NASDAQ, o el índice disponible).
+
+            ### 🔢 ¿Cómo se calcula?
+
+            **Índice de Liquidez (línea azul)**:
+            - Combina 3 métricas clave de la Reserva Federal:
+              1. **Total de activos de la Fed** (Balance Sheet)
+              2. **Reservas bancarias** (dinero que los bancos tienen en la Fed)
+              3. **M2** (oferta monetaria total en la economía)
+            - Cada métrica se convierte a **z-score** (cuántas desviaciones estándar está de su promedio)
+            - Se promedian los 3 z-scores para crear el índice compuesto
+
+            **Mercado (línea naranja/verde/dorada)**:
+            - Precio de cierre del índice bursátil (descargado de Yahoo Finance)
+            - Resampleado a frecuencia semanal para alinearse con datos de la Fed
+
+            **Normalización**:
+            - Ambas series se normalizan a base 100 en la fecha inicial
+            - Esto permite compararlas visualmente en la misma escala
+            - Valor 150 = creció 50% desde el inicio
+            - Valor 80 = cayó 20% desde el inicio
+
+            ### 💡 ¿Cómo interpretarlo?
+
+            - **Líneas que suben juntas**: Mayor liquidez impulsa el mercado ✅
+            - **Liquidez sube, mercado baja**: Anomalía temporal (crisis, pánico) ⚠️
+            - **Liquidez baja, mercado sube**: Mercado sobreextendido, posible corrección 🔴
+            - **Ambas caen**: Contracción de liquidez = presión bajista en mercados 📉
+
+            **Regla general**: La liquidez tiende a liderar al mercado con 2-8 semanas de adelanto.
+            """)
+
         chart = create_liquidity_chart(liquidity, market_weekly)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
@@ -522,6 +593,63 @@ def main():
             st.info("⚠️ Liquidity chart not available")
 
     with tab2:
+        # Explicación del gráfico
+        with st.expander("ℹ️ Cómo interpretar este gráfico"):
+            st.markdown("""
+            ### 📊 ¿Qué muestra este gráfico?
+
+            Muestra los **componentes individuales** del balance de la Reserva Federal que afectan la liquidez del sistema financiero.
+
+            ### 🔢 ¿Cómo se obtiene la información?
+
+            Todos los datos provienen de **FRED** (Federal Reserve Economic Data), la base de datos oficial de la Reserva Federal:
+
+            **1. Fed Total Assets (WALCL)** - Azul
+            - Total de activos en el balance de la Fed
+            - Incluye: bonos del Tesoro, MBS (títulos respaldados por hipotecas), préstamos
+            - **Fuente**: https://fred.stlouisfed.org/series/WALCL
+            - **Frecuencia**: Semanal (miércoles)
+            - **Unidad**: Millones de USD
+
+            **2. Bank Reserves (WRESBAL)** - Naranja
+            - Reservas que los bancos comerciales mantienen en la Fed
+            - Dinero "estacionado" que los bancos pueden usar para préstamos
+            - **Fuente**: https://fred.stlouisfed.org/series/WRESBAL
+            - **Frecuencia**: Semanal (miércoles)
+            - **Unidad**: Millones de USD
+
+            **3. M2 Money Supply (WM2NS)** - Verde
+            - Oferta monetaria total en la economía (efectivo + depósitos + fondos del mercado monetario)
+            - Incluye: billetes, cuentas corrientes, cuentas de ahorro, fondos mutuos
+            - **Fuente**: https://fred.stlouisfed.org/series/WM2NS
+            - **Frecuencia**: Semanal (lunes)
+            - **Unidad**: Miles de millones de USD (×1000)
+            - ⚠️ **Nota**: M2 tiene una escala mucho mayor (~$21T) vs Fed Assets (~$8T), por eso está en checkbox separado
+
+            ### 💡 ¿Cómo interpretarlo?
+
+            **Fed Assets aumentan**:
+            - La Fed está **comprando activos** (QE - Quantitative Easing)
+            - Inyecta liquidez al sistema = **positivo para mercados** ✅
+
+            **Bank Reserves aumentan**:
+            - Los bancos tienen más dinero disponible para prestar
+            - Mayor capacidad de crédito = **expansión económica** ✅
+
+            **M2 aumenta**:
+            - Hay más dinero circulando en la economía
+            - Puede impulsar crecimiento pero también **inflación** ⚠️
+
+            **Todos caen simultáneamente**:
+            - Política monetaria restrictiva (QT - Quantitative Tightening)
+            - Reducción de liquidez = **presión bajista en activos de riesgo** 🔴
+
+            ### 🛠️ Opciones de visualización
+
+            - **Incluir M2**: Actívalo para ver la oferta monetaria total (escala muy diferente)
+            - **Escala logarítmica**: Útil para comparar tasas de cambio relativas cuando las magnitudes son muy diferentes
+            """)
+
         chart = create_components_chart(liquidity)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
@@ -529,6 +657,66 @@ def main():
             st.info("⚠️ Components chart not available")
 
     with tab3:
+        # Explicación del gráfico
+        with st.expander("ℹ️ Cómo interpretar este gráfico"):
+            st.markdown("""
+            ### 📊 ¿Qué muestra este gráfico?
+
+            Clasifica cada periodo de tiempo en uno de **5 regímenes de liquidez** basándose en el índice de liquidez compuesto.
+
+            ### 🔢 ¿Cómo se calcula?
+
+            El **Liquidity Index** es un z-score que mide cuántas desviaciones estándar está la liquidez de su promedio histórico:
+
+            - **Z-score = (valor actual - promedio móvil) / desviación estándar móvil**
+            - Ventana rodante: 52 semanas (1 año)
+            - Combina Fed Assets, Bank Reserves y M2
+
+            **Clasificación de regímenes** (basada en el z-score):
+
+            | Régimen | Z-Score | Color | Significado |
+            |---------|---------|-------|-------------|
+            | 🔴 **Crisis** | < -2.0 | Rojo | Liquidez extremadamente baja, crisis financiera |
+            | 🟠 **Contraction** | -2.0 a -0.5 | Naranja | Contracción monetaria, Fed reduciendo balance |
+            | 🟢 **Normal** | -0.5 a +0.5 | Verde | Condiciones normales, liquidez en rango histórico |
+            | 🔵 **Expansion** | +0.5 a +2.0 | Azul | Expansión monetaria, Fed inyectando liquidez |
+            | 🟣 **Extreme Expansion** | > +2.0 | Púrpura | QE extremo (como COVID-19, 2008) |
+
+            ### 💡 ¿Cómo interpretarlo?
+
+            **🔴 Crisis** (z < -2.0):
+            - Ejemplo: Septiembre 2008 (Lehman Brothers)
+            - Liquidez colapsando, pánico en mercados
+            - **Acción**: La Fed típicamente interviene con QE masivo
+
+            **🟠 Contraction** (-2.0 < z < -0.5):
+            - La Fed está reduciendo su balance (QT)
+            - Puede preceder correcciones en mercados
+            - **Riesgo**: Activos de riesgo bajo presión
+
+            **🟢 Normal** (-0.5 < z < +0.5):
+            - Condiciones estándar, no hay estrés ni exceso
+            - Mercados funcionando normalmente
+
+            **🔵 Expansion** (+0.5 < z < +2.0):
+            - QE activo, Fed comprando activos
+            - **Positivo**: Impulso alcista para acciones, cripto, oro
+
+            **🟣 Extreme Expansion** (z > +2.0):
+            - QE extremo (COVID, 2008-2009)
+            - **Muy alcista** a corto plazo
+            - ⚠️ **Cuidado**: Puede generar burbujas y alta inflación futura
+
+            ### 📈 Estrategia de Trading
+
+            - **Crisis → Expansion**: Momento de comprar activos de riesgo (máximo potencial) 🚀
+            - **Expansion → Normal**: Mantener posiciones, tomar ganancias parciales 📊
+            - **Normal → Contraction**: Reducir exposición, aumentar efectivo 💰
+            - **Contraction → Crisis**: Solo para traders experimentados, alta volatilidad ⚠️
+
+            **Nota histórica**: Los mayores retornos del S&P 500 ocurren durante regímenes de **Expansion** y **Extreme Expansion**.
+            """)
+
         regime_chart = create_regime_chart(liquidity)
         if regime_chart:
             st.plotly_chart(regime_chart, use_container_width=True)
@@ -538,6 +726,87 @@ def main():
     with tab4:
         # Mostrar todos los activos del mercado
         st.subheader("Market Prices (Normalized)")
+
+        # Explicación del gráfico
+        with st.expander("ℹ️ Cómo interpretar este gráfico"):
+            st.markdown("""
+            ### 📊 ¿Qué muestra este gráfico?
+
+            Compara el rendimiento de **diferentes clases de activos** normalizados a base 100 para facilitar la comparación visual.
+
+            ### 🔢 ¿Cómo se obtiene la información?
+
+            Todos los precios provienen de **Yahoo Finance** (vía librería `yfinance`):
+
+            **📈 Índices de Acciones**:
+            - **S&P 500** (^GSPC): Índice de las 500 empresas más grandes de EEUU
+            - **NASDAQ** (^IXIC): Índice tech-heavy, incluye Apple, Microsoft, Amazon, etc.
+
+            **🏆 Commodities**:
+            - **Gold** (GC=F): Oro, contratos futuros (safe haven tradicional)
+
+            **💰 Cripto**:
+            - **Bitcoin** (BTC-USD): Criptomoneda principal, altamente volátil
+            - ⚠️ **Nota**: Bitcoin puede crecer 10x o caer 80% en un año, por eso está separado
+
+            **💵 Divisas**:
+            - **DXY** (DX-Y.NYB): Índice del Dólar estadounidense vs canasta de divisas (EUR, JPY, GBP, etc.)
+
+            **📊 Bonos**:
+            - **10-Year Treasury** (^TNX): Rendimiento del bono del Tesoro a 10 años (%)
+            - Sube cuando los precios de bonos bajan (relación inversa)
+
+            **Proceso de datos**:
+            1. Descarga diaria de Yahoo Finance
+            2. Resampleado a frecuencia **semanal** (último precio de la semana)
+            3. **Normalización a base 100** en la fecha inicial del rango seleccionado
+
+            ### 💡 ¿Cómo interpretarlo?
+
+            **Normalización a Base 100**:
+            - Si un activo está en **150**: Ha crecido **+50%** desde el inicio
+            - Si un activo está en **80**: Ha caído **-20%** desde el inicio
+            - Facilita comparar activos con precios muy diferentes (Bitcoin $60k vs Oro $2k)
+
+            **Patrones típicos**:
+
+            **🟢 Alta liquidez (QE activo)**:
+            - S&P 500 ↗️ (sube)
+            - NASDAQ ↗️↗️ (sube más que S&P)
+            - Bitcoin ↗️↗️↗️ (máximo beneficiado)
+            - Gold ↗️ (protección contra inflación)
+            - DXY ↘️ (dólar débil por exceso de oferta)
+
+            **🔴 Baja liquidez (QT activo)**:
+            - S&P 500 ↘️ (baja)
+            - NASDAQ ↘️↘️ (cae más que S&P)
+            - Bitcoin ↘️↘️↘️ (máximo castigado)
+            - Gold → o ↗️ (refugio seguro)
+            - DXY ↗️ (dólar fuerte, flight to safety)
+
+            **Correlaciones**:
+            - **S&P 500 vs NASDAQ**: Alta correlación positiva (~0.9)
+            - **S&P 500 vs DXY**: Correlación negativa (~-0.5 a -0.7)
+            - **Bitcoin vs Liquidez**: Altamente sensible, beta >2
+            - **Gold vs S&P 500**: Baja correlación, diversificación
+
+            ### 🛠️ Opciones de visualización
+
+            - **Incluir Bitcoin**: Actívalo para ver cripto (puede dominar el gráfico por su volatilidad extrema)
+            - **Escala logarítmica**: Actívala cuando incluyas Bitcoin o cuando los rangos sean muy diferentes
+              - En escala log, una línea recta = tasa de crecimiento constante
+              - Útil para comparar % de cambio en vez de cambio absoluto
+
+            ### 📊 Estadísticas de Performance
+
+            Abajo del gráfico verás las métricas de cada activo:
+            - **Valor actual** (normalizado): Dónde está ahora respecto al inicio
+            - **Cambio %**: Ganancia o pérdida total en el periodo
+
+            **Ejemplo**:
+            - NASDAQ: 165.3 (+65.3%) → Creció 65% en el periodo
+            - DXY: 95.2 (-4.8%) → Cayó 5% en el periodo
+            """)
 
         try:
             if market_weekly.empty:
