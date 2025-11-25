@@ -255,9 +255,39 @@ def create_components_chart(liquidity_df: pd.DataFrame):
             st.warning("⚠️ No se encontraron componentes de liquidez")
             return None
 
+        # Crear selectores para componentes
+        col1, col2 = st.columns(2)
+
+        with col1:
+            show_m2 = st.checkbox("Incluir M2", value=False,
+                                 help="M2 tiene un rango muy diferente, puede distorsionar la visualización")
+        with col2:
+            use_log = st.checkbox("Escala logarítmica", value=False,
+                                 help="Útil para comparar series con diferentes magnitudes")
+
+        # Determinar qué mostrar
+        components_to_show = []
+        for comp in available:
+            if comp == 'm2' and not show_m2:
+                continue
+            components_to_show.append(comp)
+
+        if not components_to_show:
+            st.info("⚠️ Selecciona al menos un componente para visualizar")
+            return None
+
+        # Colores mejorados
+        colors = {
+            'fed_total_assets': '#1f77b4',  # Azul
+            'bank_reserves': '#ff7f0e',     # Naranja
+            'm2': '#2ca02c',                # Verde
+            'tga': '#d62728',               # Rojo
+            'reverse_repo': '#9467bd'       # Púrpura
+        }
+
         fig = go.Figure()
 
-        for component in available:
+        for component in components_to_show:
             data = liquidity_df[component].dropna()
             if not data.empty:
                 fig.add_trace(
@@ -265,7 +295,11 @@ def create_components_chart(liquidity_df: pd.DataFrame):
                         x=data.index,
                         y=data,
                         name=component.replace('_', ' ').title(),
-                        mode='lines'
+                        mode='lines',
+                        line=dict(
+                            color=colors.get(component, None),
+                            width=2
+                        )
                     )
                 )
 
@@ -273,14 +307,23 @@ def create_components_chart(liquidity_df: pd.DataFrame):
             title="Fed Balance Sheet Components",
             xaxis_title="Date",
             yaxis_title="Millions USD",
+            yaxis_type='log' if use_log else 'linear',
             hovermode='x unified',
             height=400,
-            template="plotly_white"
+            template="plotly_white",
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01
+            )
         )
 
         return fig
     except Exception as e:
         st.error(f"Error creating components chart: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
         return None
 
 
