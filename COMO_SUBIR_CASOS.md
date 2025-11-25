@@ -1,4 +1,4 @@
-# 📂 Cómo Subir tus Casos Prácticos (Excel y PDF)
+# 📂 Cómo Subir tus Casos Prácticos (Excel, PDF y PowerPoint)
 
 ## Paso 1: Coloca tus archivos en las carpetas correspondientes
 
@@ -16,13 +16,16 @@ case_studies/
 ├── exxon/
 │   ├── exxon_dcf_model.xlsx
 │   ├── sensitivity_analysis.xlsx
+│   ├── investor_presentation.pptx
 │   └── valuation_summary.pdf
 ├── mondragon/
 │   ├── mondragon_equity_story.pdf
+│   ├── teaser_deck.pptx
 │   ├── financial_model.xlsx
 │   └── comps_analysis.xlsx
 └── cirsa/
     ├── cirsa_ipo_analysis.pdf
+    ├── management_presentation.pptx
     └── valuation_model.xlsx
 ```
 
@@ -32,6 +35,9 @@ case_studies/
 ```bash
 # Ejemplo: copiar tu Excel de Exxon
 cp /ruta/a/tu/archivo/exxon_dcf.xlsx case_studies/exxon/
+
+# Ejemplo: copiar PowerPoint de Exxon
+cp /ruta/a/tu/archivo/investor_presentation.pptx case_studies/exxon/
 
 # Ejemplo: copiar PDF de Mondragón
 cp /ruta/a/tu/archivo/mondragon_teaser.pdf case_studies/mondragon/
@@ -61,7 +67,7 @@ git add case_studies/
 git status
 
 # Commit
-git commit -m "Add case study files (Excel and PDF)"
+git commit -m "Add case study files (Excel, PDF and PowerPoint)"
 
 # Push al repo
 git push
@@ -81,12 +87,16 @@ En cada tab de "Deal Case Studies", verás:
 - `exxon_dcf_model.xlsx` ⬇️ Download
   - 👁️ Preview: exxon_dcf_model.xlsx (expandible)
 
+**📊 PowerPoint Presentations**
+- `investor_presentation.pptx` ⬇️ Download
+
 **📄 PDF Documents**
 - `valuation_summary.pdf` ⬇️ Download
 
 ## 🎨 Formatos Soportados
 
 ✅ **Excel**: `.xlsx`, `.xls`
+✅ **PowerPoint**: `.pptx`, `.ppt`
 ✅ **PDF**: `.pdf`
 
 ## 💡 Tips
@@ -95,12 +105,15 @@ En cada tab de "Deal Case Studies", verás:
 ✅ **Buenos**:
 - `DCF_Model_Final.xlsx`
 - `Valuation_Summary.pdf`
+- `Investor_Presentation.pptx`
+- `Teaser_Deck.pptx`
 - `Comps_Analysis.xlsx`
 - `Sensitivity_Tables.xlsx`
 
 ❌ **Evita**:
 - `modelo_v23_final_FINAL_2.xlsx`
 - `sin título (1).pdf`
+- `Presentación1.pptx`
 - Nombres con caracteres especiales o espacios
 
 ### Privacidad:
@@ -114,11 +127,13 @@ En cada tab de "Deal Case Studies", verás:
 ### Tamaño de archivos:
 - **Límite de Streamlit Cloud**: ~1 GB total para todo el repo
 - **Recomendado para Excels**: < 10 MB cada uno
+- **Recomendado para PowerPoint**: < 15 MB cada uno
 - **Recomendado para PDFs**: < 5 MB cada uno
 
 Si tus archivos son muy grandes:
 - Comprime los PDFs (hay herramientas online gratis)
 - Limpia los Excels (elimina hojas no usadas, formatos innecesarios)
+- Comprime imágenes en PowerPoint (clic derecho en imagen > Comprimir imágenes)
 
 ## 🔧 Troubleshooting
 

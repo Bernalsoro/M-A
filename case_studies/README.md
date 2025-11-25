@@ -1,6 +1,6 @@
 # Case Studies - Archivos
 
-Esta carpeta contiene los archivos (Excel, PDF) de tus case studies que se mostrarán en la app.
+Esta carpeta contiene los archivos (Excel, PDF, PowerPoint) de tus case studies que se mostrarán en la app.
 
 ## Estructura
 
@@ -19,6 +19,7 @@ case_studies/
 ```
 case_studies/exxon/
 ├── exxon_dcf_model.xlsx
+├── investor_presentation.pptx
 ├── exxon_valuation_summary.pdf
 └── sensitivity_analysis.xlsx
 ```
@@ -27,6 +28,7 @@ case_studies/exxon/
 ```
 case_studies/mondragon/
 ├── mondragon_equity_story.pdf
+├── teaser_deck.pptx
 ├── financial_model.xlsx
 └── comps_analysis.xlsx
 ```
@@ -35,6 +37,7 @@ case_studies/mondragon/
 ```
 case_studies/cirsa/
 ├── cirsa_ipo_analysis.pdf
+├── management_presentation.pptx
 ├── valuation_model.xlsx
 └── industry_comps.xlsx
 ```
@@ -42,8 +45,8 @@ case_studies/cirsa/
 ### 2. Formatos soportados
 
 ✅ **Excel**: `.xlsx`, `.xls`
+✅ **PowerPoint**: `.pptx`, `.ppt`
 ✅ **PDF**: `.pdf`
-✅ **CSV**: `.csv` (opcional)
 
 ### 3. Haz commit y push
 

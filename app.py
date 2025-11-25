@@ -98,9 +98,9 @@ def sample_comps():
 
 
 def get_case_files(case_folder):
-    """Get all Excel and PDF files from a case study folder."""
+    """Get all Excel, PDF, and PowerPoint files from a case study folder."""
     case_path = Path("case_studies") / case_folder
-    files = {"excel": [], "pdf": []}
+    files = {"excel": [], "pdf": [], "powerpoint": []}
 
     if case_path.exists():
         # Get Excel files
@@ -108,6 +108,9 @@ def get_case_files(case_folder):
             files["excel"].extend(list(case_path.glob(ext)))
         # Get PDF files
         files["pdf"].extend(list(case_path.glob("*.pdf")))
+        # Get PowerPoint files
+        for ext in ["*.pptx", "*.ppt"]:
+            files["powerpoint"].extend(list(case_path.glob(ext)))
 
     return files
 
@@ -116,8 +119,8 @@ def display_case_files(case_folder, case_name):
     """Display and provide download buttons for case study files."""
     files = get_case_files(case_folder)
 
-    if not files["excel"] and not files["pdf"]:
-        st.info(f"📂 No files uploaded yet for {case_name}. Add Excel/PDF files to `case_studies/{case_folder}/`")
+    if not files["excel"] and not files["pdf"] and not files["powerpoint"]:
+        st.info(f"📂 No files uploaded yet for {case_name}. Add Excel/PDF/PowerPoint files to `case_studies/{case_folder}/`")
         return
 
     st.markdown("---")
@@ -147,6 +150,23 @@ def display_case_files(case_folder, case_name):
                     st.dataframe(df_preview, use_container_width=True)
                 except Exception as e:
                     st.warning(f"Cannot preview this file: {str(e)}")
+
+    # Display PowerPoint files
+    if files["powerpoint"]:
+        st.markdown("**📊 PowerPoint Presentations**")
+        for file_path in files["powerpoint"]:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"- `{file_path.name}`")
+            with col2:
+                with open(file_path, "rb") as f:
+                    st.download_button(
+                        label="⬇️ Download",
+                        data=f.read(),
+                        file_name=file_path.name,
+                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                        key=f"download_{file_path.name}"
+                    )
 
     # Display PDF files
     if files["pdf"]:
