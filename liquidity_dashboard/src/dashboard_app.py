@@ -155,12 +155,17 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
     """Crea gráfico dual de liquidez y S&P 500."""
 
     try:
+        # Debug: mostrar columnas disponibles
+        st.write("DEBUG - Columnas en liquidity_df:", list(liquidity_df.columns))
+        st.write("DEBUG - Columnas en market_df:", list(market_df.columns))
+
         # Verificar que existan las columnas necesarias
         if 'liquidity_index' not in liquidity_df.columns:
             st.warning("⚠️ Columna 'liquidity_index' no encontrada")
             return None
         if 'sp500' not in market_df.columns:
             st.warning("⚠️ Columna 'sp500' no encontrada en datos de mercado")
+            st.write("Columnas disponibles:", list(market_df.columns))
             return None
 
         # Normalizar ambas series
@@ -211,6 +216,8 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
         return fig
     except Exception as e:
         st.error(f"Error creating liquidity chart: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
         return None
 
 
