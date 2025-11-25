@@ -30,6 +30,9 @@ examples/*.ipynb
 # Data files
 data/
 
+# Case studies - DO NOT IGNORE (needed for app)
+# The case_studies/ folder should be deployed with the app
+
 # Environment
 .env
 .env.local

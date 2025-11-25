@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
+from pathlib import Path
 
 # ---------- CONFIGURACIÓN DE LA PÁGINA ----------
 st.set_page_config(
@@ -93,6 +95,75 @@ def sample_comps():
     df["EV/Sales"] = df["EV (€m)"] / df["Sales (€m)"]
     df["EV/EBITDA"] = df["EV (€m)"] / df["EBITDA (€m)"]
     return df
+
+
+def get_case_files(case_folder):
+    """Get all Excel and PDF files from a case study folder."""
+    case_path = Path("case_studies") / case_folder
+    files = {"excel": [], "pdf": []}
+
+    if case_path.exists():
+        # Get Excel files
+        for ext in ["*.xlsx", "*.xls"]:
+            files["excel"].extend(list(case_path.glob(ext)))
+        # Get PDF files
+        files["pdf"].extend(list(case_path.glob("*.pdf")))
+
+    return files
+
+
+def display_case_files(case_folder, case_name):
+    """Display and provide download buttons for case study files."""
+    files = get_case_files(case_folder)
+
+    if not files["excel"] and not files["pdf"]:
+        st.info(f"📂 No files uploaded yet for {case_name}. Add Excel/PDF files to `case_studies/{case_folder}/`")
+        return
+
+    st.markdown("---")
+    st.markdown("### 📎 Case Materials")
+
+    # Display Excel files
+    if files["excel"]:
+        st.markdown("**📊 Excel Models**")
+        for file_path in files["excel"]:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"- `{file_path.name}`")
+            with col2:
+                with open(file_path, "rb") as f:
+                    st.download_button(
+                        label="⬇️ Download",
+                        data=f.read(),
+                        file_name=file_path.name,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"download_{file_path.name}"
+                    )
+
+            # Optional: Preview first sheet
+            with st.expander(f"👁️ Preview: {file_path.name}"):
+                try:
+                    df_preview = pd.read_excel(file_path, nrows=20)
+                    st.dataframe(df_preview, use_container_width=True)
+                except Exception as e:
+                    st.warning(f"Cannot preview this file: {str(e)}")
+
+    # Display PDF files
+    if files["pdf"]:
+        st.markdown("**📄 PDF Documents**")
+        for file_path in files["pdf"]:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"- `{file_path.name}`")
+            with col2:
+                with open(file_path, "rb") as f:
+                    st.download_button(
+                        label="⬇️ Download",
+                        data=f.read(),
+                        file_name=file_path.name,
+                        mime="application/pdf",
+                        key=f"download_{file_path.name}"
+                    )
 
 
 # ---------- SIDEBAR / NAVEGACIÓN ----------
@@ -388,6 +459,9 @@ elif page == "📁 Deal Case Studies":
             """
         )
 
+        # Display case files
+        display_case_files("exxon", "ExxonMobil")
+
     with tab2:
         st.subheader("Mondragón University – Private Education Sell-Side Case")
         st.markdown(
@@ -412,6 +486,9 @@ elif page == "📁 Deal Case Studies":
             """
         )
 
+        # Display case files
+        display_case_files("mondragon", "Mondragón University")
+
     with tab3:
         st.subheader("Other projects & pipelines")
         st.markdown(
@@ -428,6 +505,11 @@ elif page == "📁 Deal Case Studies":
             - Or communication to non-technical stakeholders
             """
         )
+
+        # Display case files for Cirsa
+        st.markdown("---")
+        st.markdown("#### 🎰 Cirsa - Gaming & Leisure Case")
+        display_case_files("cirsa", "Cirsa")
 
 
 # --- ABOUT / CONTACT ---
