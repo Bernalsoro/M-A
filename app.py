@@ -212,77 +212,96 @@ def display_case_files(case_folder, case_name):
 
 # ---------- SIDEBAR / NAVEGACIÓN ----------
 with st.sidebar:
-    st.title("💼 M&A Analyst Hub")
-    st.write("Built with Python & Streamlit")
+    st.title("M&A ANALYST HUB")
+    st.caption("Technical Valuation Platform")
     page = st.radio(
-        "Navigate",
-        ["🏠 Home",
-         "📊 DCF Valuation Playground",
-         "📈 Comps & Multiples",
-         "📁 Deal Case Studies",
-         "👤 About Me / Contact"]
+        "NAVIGATE",
+        ["Home",
+         "DCF Model",
+         "Trading Comps",
+         "Case Studies",
+         "Contact"]
     )
     st.markdown("---")
-    st.caption("Designed to showcase technical & analytical skills in M&A.")
+    st.caption("Built with Python + Streamlit | Aitor Bernal")
 
 
 # ---------- PÁGINAS ----------
 
 # --- HOME ---
-if page == "🏠 Home":
+if page == "Home":
+    st.title("M&A ANALYST HUB")
+    st.subheader("Technical Valuation Platform for Investment Banking")
+
+    st.markdown("---")
+
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.title("M&A Analyst Hub")
-        st.subheader("Technical toolkit for Investment Banking / M&A interviews")
-
+        st.header("Platform Overview")
         st.markdown(
             """
-            This mini web app is built in **Python + Streamlit** to showcase:
+            Interactive financial modeling platform demonstrating core M&A valuation capabilities:
 
-            - 📊 **Valuation modelling** (DCF with flexible assumptions)
-            - 📈 **Trading comps & multiples analysis**
-            - 📁 **Deal & case study summaries** with clear investment theses
-            - 🧠 A **data-driven mindset** applied to Corporate Finance & M&A
+            **Valuation Methodologies**
+            - DCF (Discounted Cash Flow) with sensitivity analysis
+            - Trading comparables and multiples analysis
+            - Precedent transactions framework
 
-            Use the navigation on the left to explore each section.
+            **Technical Skills**
+            - Python-based financial modeling
+            - Data-driven investment thesis development
+            - Reproducible valuation frameworks
             """
         )
 
-        st.markdown("### Why this exists")
+        st.markdown("##")
+        st.header("Core Competencies")
         st.markdown(
             """
-            In M&A you need to:
-            - Understand **business models** and value drivers
-            - Translate them into **financial models**
-            - Communicate insights in a **clear, investor-friendly** way
+            **Financial Modeling**
+            Build and stress-test DCF models with flexible assumptions.
 
-            This app is my way of showing that I can do **all three**, using
-            real tools that I also use for analysis: Python, pandas, and Streamlit.
+            **Comparable Company Analysis**
+            Analyze trading multiples and generate valuation ranges.
+
+            **Transaction Execution**
+            Structure and present M&A case studies with clear investment theses.
             """
         )
 
     with col2:
-        st.markdown("### Quick Profile")
-        st.metric("Target role", "M&A Analyst – Madrid")
-        st.metric("Background", "Data Analytics + Corporate Finance")
-        st.metric("Focus", "Modelling, valuation & storytelling")
+        st.header("Profile")
+        st.markdown("**Target Position**")
+        st.write("M&A Analyst – Madrid")
+
+        st.markdown("**Background**")
+        st.write("MSc Corporate Finance & Investment Banking")
+        st.write("Data Analytics")
+
+        st.markdown("**Focus Areas**")
+        st.write("• Financial modeling")
+        st.write("• Valuation")
+        st.write("• Python automation")
 
 
-# --- DCF VALUATION PLAYGROUND ---
-elif page == "📊 DCF Valuation Playground":
-    st.title("📊 DCF Valuation Playground")
+# --- DCF VALUATION MODEL ---
+elif page == "DCF Model":
+    st.title("DCF VALUATION MODEL")
+    st.subheader("Unlevered Free Cash Flow Analysis")
+
+    st.markdown("---")
 
     st.markdown(
         """
-        Simple 5-year **unlevered DCF** to play with key assumptions:
-        - Revenue growth
-        - Margins
-        - Capex & Working Capital
-        - WACC and terminal growth
+        **Model Specifications**
+        - 5-year explicit forecast period
+        - Unlevered free cash flow to firm (FCFF)
+        - Terminal value using perpetuity growth method
+        - Bridge to equity value via net debt adjustment
 
-        This is not meant to be a full banking model, but a **clean,
-        interview-friendly sandbox** to discuss valuation logic.
+        **Key Assumptions**
+        Adjust revenue growth, margins, capex, working capital, WACC, and terminal growth rate.
         """
     )
 
@@ -416,20 +435,26 @@ elif page == "📊 DCF Valuation Playground":
     st.markdown("### FCF profile")
     st.line_chart(df_dcf.set_index("Year")[["FCF", "FCF PV"]])
 
-    st.caption(
-        "Use this page in interviews to discuss **sensitivity** of valuation "
-        "to WACC, g, margins and capex/NWC assumptions."
-    )
+    st.markdown("---")
+    st.caption("**Note**: Sensitivity analysis demonstrates valuation impact of assumption changes across WACC, terminal growth, margins, and working capital requirements.")
 
 
-# --- COMPS & MULTIPLES ---
-elif page == "📈 Comps & Multiples":
-    st.title("📈 Trading Comps & Multiples")
+# --- TRADING COMPS ---
+elif page == "Trading Comps":
+    st.title("TRADING COMPARABLES ANALYSIS")
+    st.subheader("Relative Valuation Methodology")
+
+    st.markdown("---")
 
     st.markdown(
         """
-        Upload a simple **comps table** (CSV) or use the sample dataset.
-        The app will calculate key valuation multiples and stats.
+        **Approach**
+        - Upload comparable company data (CSV format)
+        - Calculate EV/Sales and EV/EBITDA multiples
+        - Generate valuation statistics (min, median, mean, max)
+
+        **Use Case**
+        Apply trading multiples to target company financials for relative valuation range.
         """
     )
 
@@ -455,32 +480,34 @@ elif page == "📈 Comps & Multiples":
         stats = df[["EV/Sales", "EV/EBITDA"]].agg(["min", "median", "mean", "max"]).T
         st.dataframe(stats.style.format("{:,.2f}"))
 
-        st.markdown("#### Distribution of EV/EBITDA")
+        st.markdown("#### Multiple Distribution: EV/EBITDA")
         st.bar_chart(df.set_index("Company")["EV/EBITDA"])
 
-        st.caption(
-            "You can use this section to explain how you select "
-            "a **reasonable range of trading multiples** for valuation "
-            "(e.g. low / median / high scenarios)."
-        )
+        st.markdown("---")
+        st.caption("**Valuation Range**: Select 25th percentile (bear case), median (base case), and 75th percentile (bull case) for target multiple application.")
     else:
-        st.warning(
-            f"To compute multiples automatically, your CSV must contain: {required_cols}"
-        )
+        st.warning(f"Required columns for analysis: {required_cols}")
 
 
-# --- DEAL CASE STUDIES ---
-elif page == "📁 Deal Case Studies":
-    st.title("📁 Deal & Case Studies")
+# --- CASE STUDIES ---
+elif page == "Case Studies":
+    st.title("TRANSACTION CASE STUDIES")
+    st.subheader("M&A Analysis & Equity Stories")
+
+    st.markdown("---")
 
     st.markdown(
         """
-        Short, **bank-style case summaries** you can walk through in interviews.
-        Keep it concise: thesis, key drivers, and valuation angle.
+        **Format**
+        - Investment thesis and strategic rationale
+        - Key value drivers and risks
+        - Valuation methodology and assumptions
+
+        Structured for interview discussion and technical deep-dives.
         """
     )
 
-    tab1, tab2, tab3 = st.tabs(["Energy DCF", "Education / Sell-side", "Other Ideas"])
+    tab1, tab2, tab3 = st.tabs(["Energy & Commodities", "Private Education", "Other Transactions"])
 
     with tab1:
         st.subheader("ExxonMobil – Fundamental DCF & Scenario Analysis")
@@ -534,72 +561,97 @@ elif page == "📁 Deal Case Studies":
         display_case_files("mondragon", "Mondragón University")
 
     with tab3:
-        st.subheader("Other projects & pipelines")
+        st.subheader("Additional Transaction Experience")
         st.markdown(
             """
-            - 🎰 **Gaming / Leisure** – IPO-style equity story & valuation (Cirsa case)
-            - 🏗 **Industrial** – internal analytics tools to improve backlog & capacity,
-              directly linked to **working capital and margins**
-            - 🧮 **Python valuation toolkit** – modular DCF class, WACC calculators,
-              Monte Carlo simulations for valuation scenarios
+            **Gaming & Leisure Sector**
+            - IPO-style equity story and valuation analysis
+            - Revenue model built on gaming operations and geographic expansion
+            - Comparable company analysis across European gaming operators
 
-            Each of these can be deep-dived in an interview, focusing either on:
-            - Modelling & assumptions
-            - Sector specifics
-            - Or communication to non-technical stakeholders
+            **Industrial Sector**
+            - Internal analytics tools for operational efficiency
+            - Working capital optimization frameworks
+            - Capacity planning and backlog analysis
+
+            **Technical Infrastructure**
+            - Modular DCF valuation toolkit in Python
+            - WACC calculation and cost of capital frameworks
+            - Monte Carlo simulation for scenario analysis
+
+            **Interview Discussion Points**
+            - Model assumptions and sensitivities
+            - Sector-specific value drivers
+            - Communication of technical concepts to non-technical stakeholders
             """
         )
 
         # Display case files for Cirsa
         st.markdown("---")
-        st.markdown("#### 🎰 Cirsa - Gaming & Leisure Case")
+        st.markdown("#### Cirsa - Gaming & Leisure Sector")
         display_case_files("cirsa", "Cirsa")
 
 
-# --- ABOUT / CONTACT ---
-elif page == "👤 About Me / Contact":
-    st.title("👤 About Me")
+# --- CONTACT ---
+elif page == "Contact":
+    st.title("CONTACT & PROFILE")
+    st.subheader("Aitor Bernal")
+
+    st.markdown("---")
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
+        st.header("Professional Background")
         st.markdown(
             """
-            ### Profile
+            **Education**
+            - MSc in Corporate Finance & Investment Banking
+            - Business & Data Analytics
 
-            - **Target role**: M&A Analyst (Madrid)
-            - **Background**: Business & Data Analytics + MSc in Corporate Finance & Investment Banking
-            - **Tools**: Python (pandas, NumPy), SQL, Excel, Power BI, basic modelling in Streamlit
+            **Technical Skills**
+            - Financial modeling: DCF, LBO, trading comps, precedent transactions
+            - Programming: Python (pandas, NumPy), SQL
+            - Tools: Excel, Power BI, Streamlit
 
-            I am especially interested in:
-            - Valuation (DCF, comps, LBO logic)
-            - Cross-over between **data** and **corporate finance**
-            - Using code to make analysis **reproducible and transparent**
+            **Focus Areas**
+            - Valuation and financial analysis
+            - Data-driven investment thesis development
+            - Reproducible modeling frameworks
             """
         )
 
-        st.markdown("### What this app says about me")
+        st.markdown("##")
+        st.header("Platform Capabilities")
         st.markdown(
             """
-            - I can translate theory (DCF, multiples) into **working code**
-            - I understand which **assumptions and KPIs** matter in valuation
-            - I care about **clarity**: clean layouts, simple charts, concise wording
+            **This Platform Demonstrates**
+            - Translation of valuation theory into working code
+            - Understanding of key value drivers and assumptions
+            - Clear communication of complex financial concepts
+            - Professional presentation standards
             """
         )
 
     with col2:
-        st.markdown("### Contact")
-        st.markdown(
-            """
-            - 📧 **Email**: [bernalsoro@hotmail.es](mailto:bernalsoro@hotmail.es)
-            - 🔗 **LinkedIn**: [Aitor Bernal](https://www.linkedin.com/in/aitor-bernal-financial-modeling/)
-            - 🐍 **GitHub**: [Bernalsoro](https://github.com/Bernalsoro)
-            - 📱 **Phone**: +34 606 986 980
-            """
-        )
+        st.header("Contact Information")
+        st.markdown("**Email**")
+        st.write("[bernalsoro@hotmail.es](mailto:bernalsoro@hotmail.es)")
 
-        st.markdown("---")
-        st.caption(
-            "Happy to walk you through any part of the code or models "
-            "during the interview."
-        )
+        st.markdown("**LinkedIn**")
+        st.write("[Aitor Bernal](https://www.linkedin.com/in/aitor-bernal-financial-modeling/)")
+
+        st.markdown("**GitHub**")
+        st.write("[github.com/Bernalsoro](https://github.com/Bernalsoro)")
+
+        st.markdown("**Phone**")
+        st.write("+34 606 986 980")
+
+        st.markdown("##")
+        st.markdown("**Target Position**")
+        st.write("M&A Analyst")
+        st.write("Madrid, Spain")
+
+    # Footer
+    st.markdown("---")
+    st.caption("© 2025 Aitor Bernal | Built with Python + Streamlit | Full source code available on GitHub")

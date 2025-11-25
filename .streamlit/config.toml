@@ -1,9 +1,10 @@
 [theme]
-primaryColor = "#1f77b4"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f0f2f6"
-textColor = "#262730"
-font = "sans serif"
+# Corporate Investment Banking theme
+primaryColor = "#003366"        # Navy blue - professional, trustworthy
+backgroundColor = "#FFFFFF"      # Clean white background
+secondaryBackgroundColor = "#F5F7FA"  # Light grey for sections
+textColor = "#1A1A1A"           # Near-black for readability
+font = "sans serif"             # Clean, professional font
 
 [server]
 headless = true
