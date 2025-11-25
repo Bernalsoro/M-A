@@ -591,6 +591,29 @@ elif page == "Case Studies":
         st.markdown("#### Cirsa - Gaming & Leisure Sector")
         display_case_files("cirsa", "Cirsa")
 
+        # Display case files for Nuclear Spain
+        st.markdown("---")
+        st.markdown("#### Nuclear Energy Policy Impact - Spain Industrial Competitiveness")
+        st.markdown(
+            """
+            **Policy Analysis Framework**
+            - Comparative analysis: Spanish nuclear phase-out vs French nuclear expansion
+            - Impact on industrial electricity costs and metal sector competitiveness
+            - Quantitative assessment of energy price differentials
+
+            **Sectoral Impact**
+            - Steel and aluminum production cost structure analysis
+            - Competitive positioning of Spanish metal producers vs European peers
+            - Long-term implications for industrial policy and investment flows
+
+            **Methodology**
+            - Energy cost modeling under different policy scenarios
+            - Sensitivity analysis on metal producer margins
+            - Strategic recommendations for sector stakeholders
+            """
+        )
+        display_case_files("nuclear_spain", "Nuclear Spain Analysis")
+
 
 # --- CONTACT ---
 elif page == "Contact":

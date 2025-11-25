@@ -8,7 +8,8 @@ Esta carpeta contiene los archivos (Excel, PDF, PowerPoint) de tus case studies 
 case_studies/
 ├── exxon/          # ExxonMobil - DCF & Scenario Analysis
 ├── mondragon/      # Mondragón University - Sell-Side Case
-└── cirsa/          # Cirsa - Gaming/Leisure IPO
+├── cirsa/          # Cirsa - Gaming/Leisure IPO
+└── nuclear_spain/  # Nuclear Policy Impact - Spain Industrial Analysis
 ```
 
 ## Cómo añadir tus archivos
@@ -40,6 +41,15 @@ case_studies/cirsa/
 ├── management_presentation.pptx
 ├── valuation_model.xlsx
 └── industry_comps.xlsx
+```
+
+**Nuclear Spain (Policy Analysis)**:
+```
+case_studies/nuclear_spain/
+├── spain_france_energy_comparison.xlsx
+├── metal_sector_impact_analysis.pptx
+├── policy_recommendations.pdf
+└── cost_structure_model.xlsx
 ```
 
 ### 2. Formatos soportados
