@@ -213,7 +213,7 @@ def display_case_files(case_folder, case_name):
 
 
 def analyze_excel_and_plot(case_folder):
-    """Automatically analyze Excel files and generate relevant charts."""
+    """Automatically analyze Excel files and generate M&A-relevant charts."""
     case_path = Path("case_studies") / case_folder
     excel_files = []
 
@@ -225,65 +225,146 @@ def analyze_excel_and_plot(case_folder):
         return
 
     st.markdown("---")
-    st.markdown("### 📊 Automated Data Analysis")
+    st.markdown("### 📊 KEY FINANCIAL METRICS")
 
-    for excel_file in excel_files[:2]:  # Limit to first 2 files to avoid clutter
+    for excel_file in excel_files[:2]:  # Analyze first 2 Excel files
         try:
-            # Read all sheets
             xls = pd.ExcelFile(excel_file)
+            file_analyzed = False
 
-            # Try to find sheets with numerical data
-            for sheet_name in xls.sheet_names[:3]:  # Analyze first 3 sheets
+            # Priority sheets to look for (typical M&A model structure)
+            priority_sheets = ['DCF', 'P&L', 'Income Statement', 'Valuation', 'Summary',
+                             'Financial Model', 'Financials', 'Model', 'Sheet1']
+
+            for sheet_name in xls.sheet_names:
+                # Check if this is a priority sheet
+                if not any(priority in sheet_name for priority in priority_sheets):
+                    continue
+
                 try:
                     df = pd.read_excel(excel_file, sheet_name=sheet_name)
 
                     # Skip if too small
-                    if len(df) < 3 or len(df.columns) < 2:
+                    if len(df) < 3:
                         continue
 
-                    # Find numerical columns
-                    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                    # Clean column names
+                    df.columns = df.columns.astype(str)
 
-                    if len(numeric_cols) >= 2:
+                    # Look for key financial metrics (case-insensitive)
+                    revenue_cols = [col for col in df.columns if any(x in col.lower() for x in ['revenue', 'sales', 'ingresos'])]
+                    ebitda_cols = [col for col in df.columns if 'ebitda' in col.lower()]
+                    fcf_cols = [col for col in df.columns if any(x in col.lower() for x in ['fcf', 'free cash flow', 'cash flow'])]
+                    margin_cols = [col for col in df.columns if 'margin' in col.lower()]
+
+                    # Try to find year columns
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                    year_pattern_cols = [col for col in df.columns if any(str(y) in str(col) for y in range(2020, 2035))]
+
+                    if len(numeric_cols) >= 3 or len(year_pattern_cols) >= 3:
                         st.markdown(f"**{excel_file.name}** - {sheet_name}")
 
-                        # Create figure with subplots
-                        fig, axes = plt.subplots(1, min(2, len(numeric_cols)), figsize=(12, 4))
-                        if len(numeric_cols) == 1:
-                            axes = [axes]
+                        # Look for rows with key metrics
+                        metric_rows = {}
+                        for idx, row in df.iterrows():
+                            first_cell = str(row.iloc[0]).lower() if len(row) > 0 else ''
 
-                        # Plot first few numeric columns
-                        for idx, col in enumerate(numeric_cols[:2]):
-                            if len(numeric_cols) > 1:
-                                ax = axes[idx]
+                            if any(x in first_cell for x in ['revenue', 'sales', 'ingresos']):
+                                metric_rows['Revenue'] = row
+                            elif 'ebitda' in first_cell and 'margin' not in first_cell:
+                                metric_rows['EBITDA'] = row
+                            elif any(x in first_cell for x in ['fcf', 'free cash']):
+                                metric_rows['FCF'] = row
+                            elif 'ebitda margin' in first_cell or 'ebitda %' in first_cell:
+                                metric_rows['EBITDA Margin'] = row
+
+                        if metric_rows:
+                            # Create visualization
+                            fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+                            # Chart 1: Revenue & EBITDA Evolution
+                            ax1 = axes[0]
+                            plotted = False
+
+                            for metric_name, row in metric_rows.items():
+                                if metric_name in ['Revenue', 'EBITDA']:
+                                    values = pd.to_numeric(row.iloc[1:], errors='coerce').dropna()
+                                    if len(values) >= 3:
+                                        ax1.plot(range(len(values)), values, marker='o', linewidth=2.5,
+                                               label=metric_name, markersize=6)
+                                        plotted = True
+
+                            if plotted:
+                                ax1.set_title('Revenue & EBITDA Evolution', fontsize=12, fontweight='bold')
+                                ax1.legend(loc='best')
+                                ax1.grid(True, alpha=0.3)
+                                ax1.set_xlabel('Period')
+                                ax1.set_ylabel('Value (€m)')
                             else:
-                                ax = axes[0]
+                                ax1.text(0.5, 0.5, 'No revenue/EBITDA data found',
+                                       ha='center', va='center', transform=ax1.transAxes)
+                                ax1.axis('off')
 
-                            # Line chart if looks like time series, bar chart otherwise
-                            if len(df) < 20:
-                                df[col].plot(kind='bar', ax=ax, color='#003366')
-                                ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+                            # Chart 2: FCF or Margins
+                            ax2 = axes[1]
+                            if 'FCF' in metric_rows:
+                                fcf_values = pd.to_numeric(metric_rows['FCF'].iloc[1:], errors='coerce').dropna()
+                                if len(fcf_values) >= 3:
+                                    colors = ['#003366' if x >= 0 else '#CC0000' for x in fcf_values]
+                                    ax2.bar(range(len(fcf_values)), fcf_values, color=colors, alpha=0.8)
+                                    ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+                                    ax2.set_title('Free Cash Flow', fontsize=12, fontweight='bold')
+                                    ax2.set_ylabel('FCF (€m)')
+                                    ax2.grid(True, alpha=0.3, axis='y')
+                            elif 'EBITDA Margin' in metric_rows:
+                                margin_values = pd.to_numeric(metric_rows['EBITDA Margin'].iloc[1:], errors='coerce').dropna()
+                                if len(margin_values) >= 3:
+                                    ax2.plot(range(len(margin_values)), margin_values * 100 if max(margin_values) <= 1 else margin_values,
+                                           marker='o', color='#003366', linewidth=2.5, markersize=6)
+                                    ax2.set_title('EBITDA Margin %', fontsize=12, fontweight='bold')
+                                    ax2.set_ylabel('Margin (%)')
+                                    ax2.grid(True, alpha=0.3)
                             else:
-                                df[col].plot(kind='line', ax=ax, color='#003366', linewidth=2)
+                                ax2.text(0.5, 0.5, 'No FCF/Margin data',
+                                       ha='center', va='center', transform=ax2.transAxes)
+                                ax2.axis('off')
 
-                            ax.set_title(col, fontsize=10, fontweight='bold')
-                            ax.grid(True, alpha=0.3)
-                            ax.set_xlabel('')
+                            plt.tight_layout()
+                            st.pyplot(fig)
+                            plt.close()
 
-                        plt.tight_layout()
-                        st.pyplot(fig)
-                        plt.close()
+                            # Calculate and show KPIs
+                            if 'Revenue' in metric_rows:
+                                rev_values = pd.to_numeric(metric_rows['Revenue'].iloc[1:], errors='coerce').dropna()
+                                if len(rev_values) >= 2:
+                                    cagr = ((rev_values.iloc[-1] / rev_values.iloc[0]) ** (1 / (len(rev_values) - 1)) - 1) * 100
 
-                        # Show summary stats
-                        with st.expander("📈 Summary Statistics"):
-                            st.dataframe(df[numeric_cols].describe().T.style.format("{:.2f}"))
+                                    col1, col2, col3 = st.columns(3)
+                                    with col1:
+                                        st.metric("Revenue CAGR", f"{cagr:.1f}%")
+                                    with col2:
+                                        if 'EBITDA Margin' in metric_rows:
+                                            margin_val = pd.to_numeric(metric_rows['EBITDA Margin'].iloc[-1], errors='coerce')
+                                            if pd.notna(margin_val):
+                                                st.metric("Latest EBITDA Margin",
+                                                        f"{margin_val*100:.1f}%" if margin_val <= 1 else f"{margin_val:.1f}%")
+                                    with col3:
+                                        if 'FCF' in metric_rows:
+                                            fcf_latest = pd.to_numeric(metric_rows['FCF'].iloc[-1], errors='coerce')
+                                            if pd.notna(fcf_latest):
+                                                st.metric("Latest FCF", f"€{fcf_latest:.1f}m")
 
-                        break  # Only show one sheet per file
+                            file_analyzed = True
+                            break  # Only analyze one relevant sheet per file
 
                 except Exception as e:
                     continue
 
+            if not file_analyzed:
+                st.info(f"📁 {excel_file.name} - Upload financial model with Revenue, EBITDA, FCF metrics for automatic analysis")
+
         except Exception as e:
+            st.warning(f"Could not analyze {excel_file.name}")
             continue
 
 
