@@ -154,122 +154,156 @@ def load_data():
 def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
     """Crea gráfico dual de liquidez y S&P 500."""
 
-    # Normalizar ambas series
-    liq_normalized = normalize_series(liquidity_df['liquidity_index'])
-    sp500_normalized = normalize_series(market_df['sp500'])
+    try:
+        # Verificar que existan las columnas necesarias
+        if 'liquidity_index' not in liquidity_df.columns:
+            st.warning("⚠️ Columna 'liquidity_index' no encontrada")
+            return None
+        if 'sp500' not in market_df.columns:
+            st.warning("⚠️ Columna 'sp500' no encontrada en datos de mercado")
+            return None
 
-    # Alinear fechas
-    df = pd.DataFrame({
-        'liquidity': liq_normalized,
-        'sp500': sp500_normalized
-    }).dropna()
+        # Normalizar ambas series
+        liq_normalized = normalize_series(liquidity_df['liquidity_index'].dropna())
+        sp500_normalized = normalize_series(market_df['sp500'].dropna())
 
-    fig = make_subplots(specs=[[{"secondary_y": False}]])
+        # Alinear fechas
+        df = pd.DataFrame({
+            'liquidity': liq_normalized,
+            'sp500': sp500_normalized
+        }).dropna()
 
-    # Liquidez
-    fig.add_trace(
-        go.Scatter(
-            x=df.index,
-            y=df['liquidity'],
-            name="Liquidity Index",
-            line=dict(color='#1f77b4', width=2),
+        if df.empty:
+            st.warning("⚠️ No hay datos superpuestos entre liquidez y S&P 500")
+            return None
+
+        fig = make_subplots(specs=[[{"secondary_y": False}]])
+
+        # Liquidez
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df['liquidity'],
+                name="Liquidity Index",
+                line=dict(color='#1f77b4', width=2),
+            )
         )
-    )
 
-    # S&P 500
-    fig.add_trace(
-        go.Scatter(
-            x=df.index,
-            y=df['sp500'],
-            name="S&P 500",
-            line=dict(color='#ff7f0e', width=2),
+        # S&P 500
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df['sp500'],
+                name="S&P 500",
+                line=dict(color='#ff7f0e', width=2),
+            )
         )
-    )
 
-    fig.update_layout(
-        title="Global Liquidity vs S&P 500 (Normalized)",
-        xaxis_title="Date",
-        yaxis_title="Normalized Value (Base 100)",
-        hovermode='x unified',
-        height=500,
-        template="plotly_white"
-    )
+        fig.update_layout(
+            title="Global Liquidity vs S&P 500 (Normalized)",
+            xaxis_title="Date",
+            yaxis_title="Normalized Value (Base 100)",
+            hovermode='x unified',
+            height=500,
+            template="plotly_white"
+        )
 
-    return fig
+        return fig
+    except Exception as e:
+        st.error(f"Error creating liquidity chart: {str(e)}")
+        return None
 
 
 def create_components_chart(liquidity_df: pd.DataFrame):
     """Crea gráfico de componentes de liquidez."""
 
-    components = ['fed_total_assets', 'bank_reserves', 'm2']
-    available = [col for col in components if col in liquidity_df.columns]
+    try:
+        components = ['fed_total_assets', 'bank_reserves', 'm2']
+        available = [col for col in components if col in liquidity_df.columns]
 
-    fig = go.Figure()
+        if not available:
+            st.warning("⚠️ No se encontraron componentes de liquidez")
+            return None
 
-    for component in available:
-        fig.add_trace(
-            go.Scatter(
-                x=liquidity_df.index,
-                y=liquidity_df[component],
-                name=component.replace('_', ' ').title(),
-                mode='lines'
-            )
+        fig = go.Figure()
+
+        for component in available:
+            data = liquidity_df[component].dropna()
+            if not data.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=data.index,
+                        y=data,
+                        name=component.replace('_', ' ').title(),
+                        mode='lines'
+                    )
+                )
+
+        fig.update_layout(
+            title="Fed Balance Sheet Components",
+            xaxis_title="Date",
+            yaxis_title="Millions USD",
+            hovermode='x unified',
+            height=400,
+            template="plotly_white"
         )
 
-    fig.update_layout(
-        title="Fed Balance Sheet Components",
-        xaxis_title="Date",
-        yaxis_title="Millions USD",
-        hovermode='x unified',
-        height=400,
-        template="plotly_white"
-    )
-
-    return fig
+        return fig
+    except Exception as e:
+        st.error(f"Error creating components chart: {str(e)}")
+        return None
 
 
 def create_regime_chart(liquidity_df: pd.DataFrame):
     """Crea gráfico de régimen de liquidez."""
 
-    if 'liquidity_regime' not in liquidity_df.columns:
-        return None
+    try:
+        if 'liquidity_regime' not in liquidity_df.columns or 'liquidity_index' not in liquidity_df.columns:
+            return None
 
-    # Mapear régimen a colores
-    regime_colors = {
-        'Crisis': '#d62728',
-        'Contraction': '#ff7f0e',
-        'Normal': '#2ca02c',
-        'Expansion': '#1f77b4',
-        'Extreme Expansion': '#9467bd'
-    }
+        # Mapear régimen a colores
+        regime_colors = {
+            'Crisis': '#d62728',
+            'Contraction': '#ff7f0e',
+            'Normal': '#2ca02c',
+            'Expansion': '#1f77b4',
+            'Extreme Expansion': '#9467bd'
+        }
 
-    df = liquidity_df[['liquidity_index', 'liquidity_regime']].dropna()
+        df = liquidity_df[['liquidity_index', 'liquidity_regime']].dropna()
 
-    fig = go.Figure()
+        if df.empty:
+            st.warning("⚠️ No hay datos de régimen de liquidez")
+            return None
 
-    for regime, color in regime_colors.items():
-        mask = df['liquidity_regime'] == regime
-        if mask.any():
-            fig.add_trace(
-                go.Scatter(
-                    x=df.index[mask],
-                    y=df['liquidity_index'][mask],
-                    name=regime,
-                    mode='markers',
-                    marker=dict(color=color, size=4)
+        fig = go.Figure()
+
+        for regime, color in regime_colors.items():
+            mask = df['liquidity_regime'] == regime
+            if mask.any():
+                fig.add_trace(
+                    go.Scatter(
+                        x=df.index[mask],
+                        y=df['liquidity_index'][mask],
+                        name=regime,
+                        mode='markers',
+                        marker=dict(color=color, size=4)
+                    )
                 )
-            )
 
-    fig.update_layout(
-        title="Liquidity Regime Over Time",
-        xaxis_title="Date",
-        yaxis_title="Liquidity Index (Z-Score)",
-        hovermode='x unified',
-        height=400,
-        template="plotly_white"
-    )
+        fig.update_layout(
+            title="Liquidity Regime Over Time",
+            xaxis_title="Date",
+            yaxis_title="Liquidity Index (Z-Score)",
+            hovermode='x unified',
+            height=400,
+            template="plotly_white"
+        )
 
-    return fig
+        return fig
+    except Exception as e:
+        st.error(f"Error creating regime chart: {str(e)}")
+        return None
 
 
 def main():
@@ -323,40 +357,53 @@ def main():
         liquidity = liquidity.loc[start_str:end_str]
         market_weekly = market_weekly.loc[start_str:end_str]
 
+    # Verificar que hay datos después del filtrado
+    if liquidity.empty:
+        st.warning("⚠️ No hay datos para el rango de fechas seleccionado")
+        st.stop()
+
     # Métricas principales
     st.header("📈 Key Metrics")
 
     cols = st.columns(4)
 
     # Última actualización
-    last_update = liquidity.index[-1].strftime("%Y-%m-%d")
-    cols[0].metric("Last Update", last_update)
+    if len(liquidity) > 0:
+        last_update = liquidity.index[-1].strftime("%Y-%m-%d")
+        cols[0].metric("Last Update", last_update)
 
     # Liquidez neta
-    if 'net_liquidity' in liquidity.columns:
-        net_liq = liquidity['net_liquidity'].iloc[-1]
-        net_liq_prev = liquidity['net_liquidity'].iloc[-30] if len(liquidity) > 30 else liquidity['net_liquidity'].iloc[0]
-        net_liq_delta = net_liq - net_liq_prev
-        cols[1].metric(
-            "Net Liquidity",
-            f"${net_liq:,.0f}M",
-            f"{net_liq_delta:,.0f}M"
-        )
+    if 'net_liquidity' in liquidity.columns and len(liquidity) > 0:
+        net_liq_series = liquidity['net_liquidity'].dropna()
+        if len(net_liq_series) > 0:
+            net_liq = net_liq_series.iloc[-1]
+            net_liq_prev = net_liq_series.iloc[-30] if len(net_liq_series) > 30 else net_liq_series.iloc[0]
+            net_liq_delta = net_liq - net_liq_prev
+            cols[1].metric(
+                "Net Liquidity",
+                f"${net_liq:,.0f}M",
+                f"{net_liq_delta:,.0f}M"
+            )
 
     # Índice de liquidez
-    liq_index = liquidity['liquidity_index'].iloc[-1]
-    liq_index_prev = liquidity['liquidity_index'].iloc[-30] if len(liquidity) > 30 else liquidity['liquidity_index'].iloc[0]
-    liq_index_delta = liq_index - liq_index_prev
-    cols[2].metric(
-        "Liquidity Index",
-        f"{liq_index:.2f}",
-        f"{liq_index_delta:+.2f}"
-    )
+    if 'liquidity_index' in liquidity.columns and len(liquidity) > 0:
+        liq_index_series = liquidity['liquidity_index'].dropna()
+        if len(liq_index_series) > 0:
+            liq_index = liq_index_series.iloc[-1]
+            liq_index_prev = liq_index_series.iloc[-30] if len(liq_index_series) > 30 else liq_index_series.iloc[0]
+            liq_index_delta = liq_index - liq_index_prev
+            cols[2].metric(
+                "Liquidity Index",
+                f"{liq_index:.2f}",
+                f"{liq_index_delta:+.2f}"
+            )
 
     # Régimen
-    if 'liquidity_regime' in liquidity.columns:
-        regime = liquidity['liquidity_regime'].iloc[-1]
-        cols[3].metric("Regime", regime)
+    if 'liquidity_regime' in liquidity.columns and len(liquidity) > 0:
+        regime_series = liquidity['liquidity_regime'].dropna()
+        if len(regime_series) > 0:
+            regime = regime_series.iloc[-1]
+            cols[3].metric("Regime", regime)
 
     st.markdown("---")
 
@@ -372,50 +419,66 @@ def main():
     ])
 
     with tab1:
-        st.plotly_chart(
-            create_liquidity_chart(liquidity, market_weekly),
-            use_container_width=True
-        )
+        chart = create_liquidity_chart(liquidity, market_weekly)
+        if chart:
+            st.plotly_chart(chart, use_container_width=True)
+        else:
+            st.info("⚠️ Liquidity chart not available")
 
     with tab2:
-        st.plotly_chart(
-            create_components_chart(liquidity),
-            use_container_width=True
-        )
+        chart = create_components_chart(liquidity)
+        if chart:
+            st.plotly_chart(chart, use_container_width=True)
+        else:
+            st.info("⚠️ Components chart not available")
 
     with tab3:
         regime_chart = create_regime_chart(liquidity)
         if regime_chart:
             st.plotly_chart(regime_chart, use_container_width=True)
         else:
-            st.info("Regime data not available")
+            st.info("⚠️ Regime data not available")
 
     with tab4:
         # Mostrar todos los activos del mercado
         st.subheader("Market Prices (Normalized)")
 
-        market_normalized = market_weekly.apply(normalize_series)
+        try:
+            if market_weekly.empty:
+                st.warning("⚠️ No hay datos de mercado para mostrar")
+            else:
+                # Normalizar solo columnas con datos válidos
+                market_normalized = pd.DataFrame()
+                for col in market_weekly.columns:
+                    col_data = market_weekly[col].dropna()
+                    if len(col_data) > 0:
+                        market_normalized[col] = normalize_series(col_data)
 
-        fig = go.Figure()
-        for col in market_normalized.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=market_normalized.index,
-                    y=market_normalized[col],
-                    name=col.upper(),
-                    mode='lines'
-                )
-            )
+                if market_normalized.empty:
+                    st.warning("⚠️ No se pudieron normalizar los datos de mercado")
+                else:
+                    fig = go.Figure()
+                    for col in market_normalized.columns:
+                        fig.add_trace(
+                            go.Scatter(
+                                x=market_normalized.index,
+                                y=market_normalized[col],
+                                name=col.upper(),
+                                mode='lines'
+                            )
+                        )
 
-        fig.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Normalized Value (Base 100)",
-            hovermode='x unified',
-            height=500,
-            template="plotly_white"
-        )
+                    fig.update_layout(
+                        xaxis_title="Date",
+                        yaxis_title="Normalized Value (Base 100)",
+                        hovermode='x unified',
+                        height=500,
+                        template="plotly_white"
+                    )
 
-        st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error displaying market overview: {str(e)}")
 
     # Tabla de resumen
     st.markdown("---")
