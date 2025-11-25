@@ -152,16 +152,12 @@ def load_data():
 
 
 def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
-    """Crea gráfico dual de liquidez y S&P 500."""
+    """Crea gráfico dual de liquidez y mercado de valores."""
 
     try:
         # Verificar que existan las columnas necesarias
         if 'liquidity_index' not in liquidity_df.columns:
             st.warning("⚠️ Columna 'liquidity_index' no encontrada")
-            return None
-        if 'sp500' not in market_df.columns:
-            st.warning("⚠️ Columna 'sp500' no encontrada en datos de mercado")
-            st.write("Columnas disponibles:", list(market_df.columns))
             return None
 
         # Verificar que hay datos
@@ -169,18 +165,45 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
             st.warning("⚠️ Uno de los DataFrames está vacío")
             return None
 
+        # Determinar qué ticker de mercado usar (con fallback)
+        market_ticker = None
+        market_name = None
+
+        # Intentar en orden de preferencia
+        preference_order = ['sp500', 'nasdaq', 'gold', 'dxy']
+        for ticker in preference_order:
+            if ticker in market_df.columns:
+                market_ticker = ticker
+                market_name = {
+                    'sp500': 'S&P 500',
+                    'nasdaq': 'NASDAQ',
+                    'gold': 'Gold',
+                    'dxy': 'DXY'
+                }.get(ticker, ticker.upper())
+                break
+
+        # Si no encontramos ninguno de los preferidos, usar el primero disponible
+        if market_ticker is None and len(market_df.columns) > 0:
+            market_ticker = market_df.columns[0]
+            market_name = market_ticker.upper().replace('_', ' ')
+
+        if market_ticker is None:
+            st.warning("⚠️ No hay datos de mercado disponibles")
+            st.write("Columnas en market_df:", list(market_df.columns))
+            return None
+
         # Obtener series
         liq_series = liquidity_df['liquidity_index'].dropna()
-        sp500_series = market_df['sp500'].dropna()
+        market_series = market_df[market_ticker].dropna()
 
-        if liq_series.empty or sp500_series.empty:
+        if liq_series.empty or market_series.empty:
             st.warning("⚠️ Una de las series está vacía después de dropna()")
             return None
 
         # Crear DataFrame combinado ANTES de normalizar
         df_combined = pd.DataFrame({
             'liquidity_raw': liq_series,
-            'sp500_raw': sp500_series
+            'market_raw': market_series
         })
 
         # Forward fill para manejar diferentes frecuencias
@@ -190,19 +213,19 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
         df_combined = df_combined.dropna()
 
         if df_combined.empty:
-            st.warning("⚠️ No hay datos superpuestos entre liquidez y S&P 500")
+            st.warning(f"⚠️ No hay datos superpuestos entre liquidez y {market_name}")
             st.write(f"📅 Rango liquidity: {liq_series.index.min()} a {liq_series.index.max()} ({len(liq_series)} puntos)")
-            st.write(f"📅 Rango market: {sp500_series.index.min()} a {sp500_series.index.max()} ({len(sp500_series)} puntos)")
+            st.write(f"📅 Rango market: {market_series.index.min()} a {market_series.index.max()} ({len(market_series)} puntos)")
             return None
 
         # Normalizar las series combinadas
         liq_normalized = normalize_series(df_combined['liquidity_raw'])
-        sp500_normalized = normalize_series(df_combined['sp500_raw'])
+        market_normalized = normalize_series(df_combined['market_raw'])
 
         # Crear DataFrame final
         df = pd.DataFrame({
             'liquidity': liq_normalized,
-            'sp500': sp500_normalized
+            'market': market_normalized
         })
 
         fig = make_subplots(specs=[[{"secondary_y": False}]])
@@ -217,18 +240,18 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
             )
         )
 
-        # S&P 500
+        # Market ticker (dinámico)
         fig.add_trace(
             go.Scatter(
                 x=df.index,
-                y=df['sp500'],
-                name="S&P 500",
+                y=df['market'],
+                name=market_name,
                 line=dict(color='#ff7f0e', width=2),
             )
         )
 
         fig.update_layout(
-            title="Global Liquidity vs S&P 500 (Normalized)",
+            title=f"Global Liquidity vs {market_name} (Normalized)",
             xaxis_title="Date",
             yaxis_title="Normalized Value (Base 100)",
             hovermode='x unified',
