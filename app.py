@@ -591,9 +591,10 @@ elif page == "👤 About Me / Contact":
         st.markdown("### Contact")
         st.markdown(
             """
-            - 📧 Email: *add your email here*
-            - 🔗 LinkedIn: *add your LinkedIn URL*
-            - 🐍 GitHub: *link to your valuation / modelling repos*
+            - 📧 **Email**: [bernalsoro@hotmail.es](mailto:bernalsoro@hotmail.es)
+            - 🔗 **LinkedIn**: [Aitor Bernal](https://www.linkedin.com/in/aitor-bernal-financial-modeling/)
+            - 🐍 **GitHub**: [Bernalsoro](https://github.com/Bernalsoro)
+            - 📱 **Phone**: +34 606 986 980
             """
         )
 
