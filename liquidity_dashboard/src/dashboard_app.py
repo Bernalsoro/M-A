@@ -3,6 +3,8 @@ Global Liquidity Dashboard - Streamlit App
 
 Dashboard interactivo para visualizar liquidez global y su relación
 con los mercados financieros.
+
+Version: 2025-11-25 - Enhanced with interactive filters
 """
 
 import sys
