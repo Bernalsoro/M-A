@@ -1,6 +1,7 @@
 """
 Entry point for Streamlit Cloud deployment.
 This file redirects to the actual dashboard app.
+Updated: Added interactive filters to all charts
 """
 
 import sys
