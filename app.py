@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import base64
 from pathlib import Path
 
 # ---------- CONFIGURACIÓN DE LA PÁGINA ----------
@@ -168,6 +169,15 @@ def display_case_files(case_folder, case_name):
                         key=f"download_{file_path.name}"
                     )
 
+            # Optional: Preview with Google Docs Viewer
+            with st.expander(f"👁️ Preview: {file_path.name}"):
+                st.info("💡 Preview opens in Google Docs Viewer (may require public link). Download the file to view it locally.")
+                # For local files, we can't use Google Docs Viewer directly
+                # Show file info instead
+                st.markdown(f"**File**: `{file_path.name}`")
+                st.markdown(f"**Size**: {file_path.stat().st_size / 1024:.1f} KB")
+                st.markdown("Click **Download** to view the presentation locally.")
+
     # Display PDF files
     if files["pdf"]:
         st.markdown("**📄 PDF Documents**")
@@ -184,6 +194,20 @@ def display_case_files(case_folder, case_name):
                         mime="application/pdf",
                         key=f"download_{file_path.name}"
                     )
+
+            # Optional: Preview PDF with embedded viewer
+            with st.expander(f"👁️ Preview: {file_path.name}"):
+                try:
+                    with open(file_path, "rb") as f:
+                        pdf_bytes = f.read()
+                        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+
+                    # Embed PDF using iframe
+                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+                    st.markdown(pdf_display, unsafe_allow_html=True)
+                except Exception as e:
+                    st.warning(f"Cannot preview this PDF: {str(e)}")
+                    st.markdown("Click **Download** to view the PDF locally.")
 
 
 # ---------- SIDEBAR / NAVEGACIÓN ----------
