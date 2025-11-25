@@ -151,7 +151,7 @@ def load_data():
         st.stop()
 
 
-def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
+def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame, selected_ticker=None):
     """Crea gráfico dual de liquidez y mercado de valores."""
 
     try:
@@ -165,32 +165,39 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
             st.warning("⚠️ Uno de los DataFrames está vacío")
             return None
 
-        # Determinar qué ticker de mercado usar (con fallback)
+        # Determinar qué ticker de mercado usar
         market_ticker = None
         market_name = None
 
-        # Intentar en orden de preferencia
-        preference_order = ['sp500', 'nasdaq', 'gold', 'dxy']
-        for ticker in preference_order:
-            if ticker in market_df.columns:
-                market_ticker = ticker
-                market_name = {
-                    'sp500': 'S&P 500',
-                    'nasdaq': 'NASDAQ',
-                    'gold': 'Gold',
-                    'dxy': 'DXY'
-                }.get(ticker, ticker.upper())
-                break
+        # Si se especificó un ticker y existe, usarlo
+        if selected_ticker and selected_ticker in market_df.columns:
+            market_ticker = selected_ticker
+        else:
+            # Fallback: intentar en orden de preferencia
+            preference_order = ['sp500', 'nasdaq', 'gold', 'dxy']
+            for ticker in preference_order:
+                if ticker in market_df.columns:
+                    market_ticker = ticker
+                    break
 
-        # Si no encontramos ninguno de los preferidos, usar el primero disponible
-        if market_ticker is None and len(market_df.columns) > 0:
-            market_ticker = market_df.columns[0]
-            market_name = market_ticker.upper().replace('_', ' ')
+            # Si no encontramos ninguno de los preferidos, usar el primero disponible
+            if market_ticker is None and len(market_df.columns) > 0:
+                market_ticker = market_df.columns[0]
 
         if market_ticker is None:
             st.warning("⚠️ No hay datos de mercado disponibles")
             st.write("Columnas en market_df:", list(market_df.columns))
             return None
+
+        # Determinar nombre para mostrar
+        market_name = {
+            'sp500': 'S&P 500',
+            'nasdaq': 'NASDAQ',
+            'gold': 'Gold',
+            'dxy': 'DXY',
+            'bitcoin': 'Bitcoin',
+            'ten_year_treasury': '10Y Treasury'
+        }.get(market_ticker, market_ticker.upper().replace('_', ' '))
 
         # Obtener series
         liq_series = liquidity_df['liquidity_index'].dropna()
@@ -350,7 +357,7 @@ def create_components_chart(liquidity_df: pd.DataFrame):
         return None
 
 
-def create_regime_chart(liquidity_df: pd.DataFrame):
+def create_regime_chart(liquidity_df: pd.DataFrame, selected_regimes=None):
     """Crea gráfico de régimen de liquidez."""
 
     try:
@@ -372,9 +379,17 @@ def create_regime_chart(liquidity_df: pd.DataFrame):
             st.warning("⚠️ No hay datos de régimen de liquidez")
             return None
 
+        # Si no se especifican regímenes, mostrar todos
+        if selected_regimes is None:
+            selected_regimes = list(regime_colors.keys())
+
         fig = go.Figure()
 
         for regime, color in regime_colors.items():
+            # Solo mostrar si está en la selección
+            if regime not in selected_regimes:
+                continue
+
             mask = df['liquidity_regime'] == regime
             if mask.any():
                 fig.add_trace(
@@ -586,7 +601,38 @@ def main():
             **Regla general**: La liquidez tiende a liderar al mercado con 2-8 semanas de adelanto.
             """)
 
-        chart = create_liquidity_chart(liquidity, market_weekly)
+        # Selector de activo a comparar
+        available_tickers = list(market_weekly.columns)
+        if available_tickers:
+            ticker_names = {
+                'sp500': 'S&P 500',
+                'nasdaq': 'NASDAQ',
+                'gold': 'Gold',
+                'dxy': 'DXY (Dollar Index)',
+                'bitcoin': 'Bitcoin',
+                'ten_year_treasury': '10-Year Treasury'
+            }
+
+            # Crear opciones con nombres bonitos
+            ticker_options = {ticker: ticker_names.get(ticker, ticker.upper().replace('_', ' '))
+                            for ticker in available_tickers}
+
+            # Determinar default (preferir sp500, luego nasdaq, luego el primero)
+            default_ticker = 'sp500' if 'sp500' in available_tickers else \
+                           'nasdaq' if 'nasdaq' in available_tickers else \
+                           available_tickers[0]
+
+            selected_ticker = st.selectbox(
+                "📊 Comparar liquidez con:",
+                options=available_tickers,
+                format_func=lambda x: ticker_options.get(x, x),
+                index=available_tickers.index(default_ticker),
+                key="liquidity_ticker_selector"
+            )
+        else:
+            selected_ticker = None
+
+        chart = create_liquidity_chart(liquidity, market_weekly, selected_ticker)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
         else:
@@ -717,11 +763,34 @@ def main():
             **Nota histórica**: Los mayores retornos del S&P 500 ocurren durante regímenes de **Expansion** y **Extreme Expansion**.
             """)
 
-        regime_chart = create_regime_chart(liquidity)
-        if regime_chart:
-            st.plotly_chart(regime_chart, use_container_width=True)
+        # Filtro de regímenes
+        all_regimes = ['Crisis', 'Contraction', 'Normal', 'Expansion', 'Extreme Expansion']
+
+        # Iconos para cada régimen
+        regime_icons = {
+            'Crisis': '🔴',
+            'Contraction': '🟠',
+            'Normal': '🟢',
+            'Expansion': '🔵',
+            'Extreme Expansion': '🟣'
+        }
+
+        selected_regimes = st.multiselect(
+            "🎯 Filtrar por régimen:",
+            options=all_regimes,
+            default=all_regimes,
+            format_func=lambda x: f"{regime_icons.get(x, '')} {x}",
+            help="Selecciona los regímenes que quieres visualizar en el gráfico"
+        )
+
+        if not selected_regimes:
+            st.warning("⚠️ Selecciona al menos un régimen para visualizar.")
         else:
-            st.info("⚠️ Regime data not available")
+            regime_chart = create_regime_chart(liquidity, selected_regimes)
+            if regime_chart:
+                st.plotly_chart(regime_chart, use_container_width=True)
+            else:
+                st.info("⚠️ Regime data not available")
 
     with tab4:
         # Mostrar todos los activos del mercado
@@ -815,24 +884,34 @@ def main():
                 # Selector de activos a mostrar
                 all_assets = list(market_weekly.columns)
 
-                # Separar Bitcoin de los demás por su volatilidad extrema
-                traditional_assets = [a for a in all_assets if a != 'bitcoin']
+                # Nombres bonitos para los activos
+                asset_names = {
+                    'sp500': 'S&P 500',
+                    'nasdaq': 'NASDAQ',
+                    'gold': 'Gold',
+                    'dxy': 'DXY (Dollar)',
+                    'bitcoin': 'Bitcoin',
+                    'ten_year_treasury': '10Y Treasury'
+                }
+
+                # Activos tradicionales por defecto (sin Bitcoin)
+                default_assets = [a for a in all_assets if a != 'bitcoin']
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    show_bitcoin = st.checkbox("Incluir Bitcoin", value=False,
-                                              help="Bitcoin tiene un rango muy diferente, puede distorsionar la visualización")
+                    assets_to_show = st.multiselect(
+                        "📈 Seleccionar activos:",
+                        options=all_assets,
+                        default=default_assets,
+                        format_func=lambda x: asset_names.get(x, x.upper().replace('_', ' ')),
+                        help="Selecciona los activos que quieres comparar. Bitcoin tiene alta volatilidad."
+                    )
                 with col2:
                     use_log_scale = st.checkbox("Escala logarítmica", value=False,
                                                help="Útil cuando hay activos con rangos muy diferentes")
 
-                # Determinar qué activos mostrar
-                assets_to_show = traditional_assets.copy()
-                if show_bitcoin and 'bitcoin' in all_assets:
-                    assets_to_show.append('bitcoin')
-
                 if not assets_to_show:
-                    st.warning("⚠️ No hay activos seleccionados")
+                    st.warning("⚠️ No hay activos seleccionados. Por favor, selecciona al menos uno.")
                 else:
                     # Normalizar solo columnas seleccionadas
                     market_normalized = pd.DataFrame()
