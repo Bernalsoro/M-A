@@ -155,10 +155,6 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
     """Crea gráfico dual de liquidez y S&P 500."""
 
     try:
-        # Debug: mostrar columnas disponibles
-        st.write("DEBUG - Columnas en liquidity_df:", list(liquidity_df.columns))
-        st.write("DEBUG - Columnas en market_df:", list(market_df.columns))
-
         # Verificar que existan las columnas necesarias
         if 'liquidity_index' not in liquidity_df.columns:
             st.warning("⚠️ Columna 'liquidity_index' no encontrada")
@@ -168,19 +164,46 @@ def create_liquidity_chart(liquidity_df: pd.DataFrame, market_df: pd.DataFrame):
             st.write("Columnas disponibles:", list(market_df.columns))
             return None
 
-        # Normalizar ambas series
-        liq_normalized = normalize_series(liquidity_df['liquidity_index'].dropna())
-        sp500_normalized = normalize_series(market_df['sp500'].dropna())
+        # Verificar que hay datos
+        if liquidity_df.empty or market_df.empty:
+            st.warning("⚠️ Uno de los DataFrames está vacío")
+            return None
 
-        # Alinear fechas
+        # Obtener series
+        liq_series = liquidity_df['liquidity_index'].dropna()
+        sp500_series = market_df['sp500'].dropna()
+
+        if liq_series.empty or sp500_series.empty:
+            st.warning("⚠️ Una de las series está vacía después de dropna()")
+            return None
+
+        # Crear DataFrame combinado ANTES de normalizar
+        df_combined = pd.DataFrame({
+            'liquidity_raw': liq_series,
+            'sp500_raw': sp500_series
+        })
+
+        # Forward fill para manejar diferentes frecuencias
+        df_combined = df_combined.fillna(method='ffill').fillna(method='bfill')
+
+        # Eliminar filas donde AMBAS sean NaN
+        df_combined = df_combined.dropna()
+
+        if df_combined.empty:
+            st.warning("⚠️ No hay datos superpuestos entre liquidez y S&P 500")
+            st.write(f"📅 Rango liquidity: {liq_series.index.min()} a {liq_series.index.max()} ({len(liq_series)} puntos)")
+            st.write(f"📅 Rango market: {sp500_series.index.min()} a {sp500_series.index.max()} ({len(sp500_series)} puntos)")
+            return None
+
+        # Normalizar las series combinadas
+        liq_normalized = normalize_series(df_combined['liquidity_raw'])
+        sp500_normalized = normalize_series(df_combined['sp500_raw'])
+
+        # Crear DataFrame final
         df = pd.DataFrame({
             'liquidity': liq_normalized,
             'sp500': sp500_normalized
-        }).dropna()
-
-        if df.empty:
-            st.warning("⚠️ No hay datos superpuestos entre liquidez y S&P 500")
-            return None
+        })
 
         fig = make_subplots(specs=[[{"secondary_y": False}]])
 
