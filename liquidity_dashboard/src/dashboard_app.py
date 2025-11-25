@@ -477,38 +477,97 @@ def main():
             if market_weekly.empty:
                 st.warning("⚠️ No hay datos de mercado para mostrar")
             else:
-                # Normalizar solo columnas con datos válidos
-                market_normalized = pd.DataFrame()
-                for col in market_weekly.columns:
-                    col_data = market_weekly[col].dropna()
-                    if len(col_data) > 0:
-                        market_normalized[col] = normalize_series(col_data)
+                # Selector de activos a mostrar
+                all_assets = list(market_weekly.columns)
 
-                if market_normalized.empty:
-                    st.warning("⚠️ No se pudieron normalizar los datos de mercado")
+                # Separar Bitcoin de los demás por su volatilidad extrema
+                traditional_assets = [a for a in all_assets if a != 'bitcoin']
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    show_bitcoin = st.checkbox("Incluir Bitcoin", value=False,
+                                              help="Bitcoin tiene un rango muy diferente, puede distorsionar la visualización")
+                with col2:
+                    use_log_scale = st.checkbox("Escala logarítmica", value=False,
+                                               help="Útil cuando hay activos con rangos muy diferentes")
+
+                # Determinar qué activos mostrar
+                assets_to_show = traditional_assets.copy()
+                if show_bitcoin and 'bitcoin' in all_assets:
+                    assets_to_show.append('bitcoin')
+
+                if not assets_to_show:
+                    st.warning("⚠️ No hay activos seleccionados")
                 else:
-                    fig = go.Figure()
-                    for col in market_normalized.columns:
-                        fig.add_trace(
-                            go.Scatter(
-                                x=market_normalized.index,
-                                y=market_normalized[col],
-                                name=col.upper(),
-                                mode='lines'
+                    # Normalizar solo columnas seleccionadas
+                    market_normalized = pd.DataFrame()
+                    for col in assets_to_show:
+                        if col in market_weekly.columns:
+                            col_data = market_weekly[col].dropna()
+                            if len(col_data) > 0:
+                                market_normalized[col] = normalize_series(col_data)
+
+                    if market_normalized.empty:
+                        st.warning("⚠️ No se pudieron normalizar los datos de mercado")
+                    else:
+                        # Colores más distinguibles
+                        colors = {
+                            'sp500': '#1f77b4',      # Azul
+                            'nasdaq': '#ff7f0e',     # Naranja
+                            'gold': '#FFD700',       # Dorado
+                            'bitcoin': '#F7931A',    # Bitcoin naranja
+                            'dxy': '#2ca02c',        # Verde
+                            'ten_year_treasury': '#d62728'  # Rojo
+                        }
+
+                        fig = go.Figure()
+                        for col in market_normalized.columns:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=market_normalized.index,
+                                    y=market_normalized[col],
+                                    name=col.upper().replace('_', ' '),
+                                    mode='lines',
+                                    line=dict(
+                                        color=colors.get(col, None),
+                                        width=2
+                                    )
+                                )
+                            )
+
+                        fig.update_layout(
+                            xaxis_title="Date",
+                            yaxis_title="Normalized Value (Base 100)",
+                            yaxis_type='log' if use_log_scale else 'linear',
+                            hovermode='x unified',
+                            height=500,
+                            template="plotly_white",
+                            legend=dict(
+                                yanchor="top",
+                                y=0.99,
+                                xanchor="left",
+                                x=0.01
                             )
                         )
 
-                    fig.update_layout(
-                        xaxis_title="Date",
-                        yaxis_title="Normalized Value (Base 100)",
-                        hovermode='x unified',
-                        height=500,
-                        template="plotly_white"
-                    )
+                        st.plotly_chart(fig, use_container_width=True)
 
-                    st.plotly_chart(fig, use_container_width=True)
+                        # Mostrar estadísticas
+                        if len(market_normalized.columns) > 0:
+                            st.subheader("📊 Performance desde inicio del período")
+                            perf_cols = st.columns(len(market_normalized.columns))
+                            for idx, col in enumerate(market_normalized.columns):
+                                latest = market_normalized[col].iloc[-1]
+                                change = latest - 100
+                                perf_cols[idx].metric(
+                                    col.upper().replace('_', ' '),
+                                    f"{latest:.1f}",
+                                    f"{change:+.1f}%"
+                                )
         except Exception as e:
             st.error(f"Error displaying market overview: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
 
     # Tabla de resumen
     st.markdown("---")
