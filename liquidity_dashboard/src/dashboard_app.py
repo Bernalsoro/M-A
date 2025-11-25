@@ -430,17 +430,58 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        st.header("📊 Filters")
+        st.header("📊 Filtros")
 
         # Selector de rango de fechas
         min_date = liquidity.index.min().date()
         max_date = liquidity.index.max().date()
 
+        # Presets de fechas
+        st.subheader("📅 Rango de Fechas")
+
+        from datetime import datetime, timedelta
+
+        preset = st.selectbox(
+            "Selección rápida:",
+            ["Personalizado", "Todo el periodo", "Último año", "Últimos 6 meses", "Últimos 3 meses", "YTD (año actual)", "2024", "2023", "2022"],
+            index=1  # "Todo el periodo" por defecto
+        )
+
+        # Calcular fechas según preset
+        if preset == "Todo el periodo":
+            default_start = min_date
+            default_end = max_date
+        elif preset == "Último año":
+            default_end = max_date
+            default_start = max(min_date, (datetime.now() - timedelta(days=365)).date())
+        elif preset == "Últimos 6 meses":
+            default_end = max_date
+            default_start = max(min_date, (datetime.now() - timedelta(days=182)).date())
+        elif preset == "Últimos 3 meses":
+            default_end = max_date
+            default_start = max(min_date, (datetime.now() - timedelta(days=91)).date())
+        elif preset == "YTD (año actual)":
+            default_start = max(min_date, datetime(datetime.now().year, 1, 1).date())
+            default_end = max_date
+        elif preset == "2024":
+            default_start = max(min_date, datetime(2024, 1, 1).date())
+            default_end = min(max_date, datetime(2024, 12, 31).date())
+        elif preset == "2023":
+            default_start = max(min_date, datetime(2023, 1, 1).date())
+            default_end = min(max_date, datetime(2023, 12, 31).date())
+        elif preset == "2022":
+            default_start = max(min_date, datetime(2022, 1, 1).date())
+            default_end = min(max_date, datetime(2022, 12, 31).date())
+        else:  # Personalizado
+            default_start = min_date
+            default_end = max_date
+
         date_range = st.date_input(
-            "Date Range",
-            value=(min_date, max_date),
+            "Seleccionar fechas:",
+            value=(default_start, default_end),
             min_value=min_date,
-            max_value=max_date
+            max_value=max_date,
+            help="Este filtro afecta a todos los gráficos del dashboard"
         )
 
         st.markdown("---")
@@ -501,6 +542,11 @@ def main():
         end_str = end_date.strftime("%Y-%m-%d")
         liquidity = liquidity.loc[start_str:end_str]
         market_weekly = market_weekly.loc[start_str:end_str]
+
+        # Mostrar info del filtro aplicado
+        days_diff = (end_date - start_date).days
+        weeks_count = len(liquidity)
+        st.info(f"📅 Mostrando datos desde **{start_date.strftime('%d/%m/%Y')}** hasta **{end_date.strftime('%d/%m/%Y')}** ({days_diff} días, {weeks_count} semanas)")
 
     # Verificar que hay datos después del filtrado
     if liquidity.empty:
