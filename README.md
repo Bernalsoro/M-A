@@ -2,6 +2,25 @@
 
 Herramientas profesionales de valoración para Fusiones y Adquisiciones (M&A).
 
+## 🌐 M&A Analyst Hub - Aplicación Web Interactiva
+
+**¡NUEVO!** Explora las herramientas de valoración en una interfaz web profesional:
+
+- 📊 **DCF Playground**: Modelo DCF interactivo con sliders para WACC, crecimiento, márgenes
+- 📈 **Comps & Multiples**: Sube CSVs o usa datos de muestra para análisis de comparables
+- 📁 **Deal Case Studies**: Casos reales (ExxonMobil, Mondragón, etc.)
+- 👤 **Professional Profile**: Showcase de skills técnicos y analíticos
+
+**🚀 Ejecutar localmente:**
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+**☁️ Deploy online (gratis):** Ver [DEPLOYMENT.md](DEPLOYMENT.md) para publicar en Streamlit Cloud
+
+---
+
 ## 🚀 Características
 
 ### Herramientas de Valoración

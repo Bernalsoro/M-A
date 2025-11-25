@@ -1,0 +1,38 @@
+# Files to ignore when deploying to Streamlit Cloud
+
+# Documentation
+*.md
+!README.md
+!STREAMLIT_APP.md
+
+# Tests
+tests/
+.pytest_cache/
+
+# Development
+.vscode/
+.idea/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Examples (keep only if needed)
+examples/nvidia_case_study.py
+examples/*.ipynb
+
+# Data files
+data/
+
+# Case studies - DO NOT IGNORE (needed for app)
+# The case_studies/ folder should be deployed with the app
+
+# Environment
+.env
+.env.local
