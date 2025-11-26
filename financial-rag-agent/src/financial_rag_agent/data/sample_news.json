@@ -1,0 +1,128 @@
+[
+  {
+    "ticker": "AAPL",
+    "date": "2024-11-02",
+    "headline": "Apple Reports Strong Q4 2024 Results, Beats Expectations",
+    "summary": "Apple Inc. reported fourth quarter revenue of $94.93B, up 6% YoY, driven by strong iPhone 16 sales and Services growth. Net income reached $22.96B with EPS of $1.64, beating analyst estimates. Services segment revenue grew 12% to $25.2B, reaching a new all-time high. Management highlighted strong demand in emerging markets and continued momentum in wearables. Gross margin expanded to 46.2% from 44.9% YoY, reflecting favorable product mix and operating leverage."
+  },
+  {
+    "ticker": "AAPL",
+    "date": "2024-10-15",
+    "headline": "Apple Expands AI Features with Apple Intelligence Launch",
+    "summary": "Apple unveiled Apple Intelligence, its comprehensive AI strategy integrated across iOS, iPadOS, and macOS. The initiative focuses on on-device processing for privacy and includes enhanced Siri capabilities, predictive text, and image generation. Analysts view this as critical for defending market share against Android AI features. The rollout will be gradual across 2024-2025, starting with premium devices."
+  },
+  {
+    "ticker": "AAPL",
+    "date": "2024-09-20",
+    "headline": "iPhone 16 Series Sees Record Pre-Orders",
+    "summary": "Pre-orders for the iPhone 16 lineup exceeded expectations, with the Pro models showing particularly strong demand. Supply chain sources indicate production increases of 10-15% vs iPhone 15 cycle. The new A18 chip and improved camera system are cited as key differentiators. ASPs are trending higher with consumers upgrading to higher-capacity models."
+  },
+  {
+    "ticker": "MSFT",
+    "date": "2024-10-30",
+    "headline": "Microsoft Cloud Revenue Surges, Driven by Azure AI Services",
+    "summary": "Microsoft reported Q4 FY2024 revenue of $65.59B, up 16% YoY, with cloud services (Azure, Office 365, Dynamics) growing 22% to $38.9B. Azure revenue increased 31% in constant currency, with AI services contributing 12 percentage points of growth. Microsoft Cloud gross margin improved to 72%, up from 71% YoY, despite heavy AI infrastructure investments. Management guided FY2025 capital expenditures of $50-55B focused on datacenter expansion for AI workloads."
+  },
+  {
+    "ticker": "MSFT",
+    "date": "2024-10-10",
+    "headline": "Microsoft and OpenAI Deepen Partnership with GPT-5 Integration",
+    "summary": "Microsoft announced expanded integration of OpenAI's upcoming GPT-5 model across its product suite, including Copilot, Azure OpenAI Service, and Microsoft 365. The partnership now includes joint development of custom AI chips to reduce dependency on Nvidia. Enterprise adoption of Copilot for Microsoft 365 reached 70K organizations, up from 50K last quarter, with strong attach rates in Fortune 500 accounts."
+  },
+  {
+    "ticker": "MSFT",
+    "date": "2024-09-25",
+    "headline": "Microsoft Gaming Division Reaches $21B Annual Revenue",
+    "summary": "Following the Activision Blizzard acquisition, Microsoft Gaming has become a $21B annual revenue business, making it the third-largest gaming company globally. Xbox Game Pass subscribers grew 28% YoY to 47M. Management emphasized content pipeline strength with major franchises (Call of Duty, World of Warcraft, Diablo) now exclusive to the Microsoft ecosystem. Operating margin remains below company average but improving due to synergies."
+  },
+  {
+    "ticker": "NVDA",
+    "date": "2024-11-20",
+    "headline": "NVIDIA Q4 Revenue Soars to $26B on Data Center Demand",
+    "summary": "NVIDIA reported record Q4 FY2024 revenue of $26.04B, up 94% YoY, with Data Center segment reaching $22.1B (up 112% YoY). Demand for Hopper (H100/H200) GPUs remains supply-constrained despite significant capacity additions. Gross margin compressed to 75.0% from 78.4% due to product mix shift toward data center products. Management provided strong FY2025 guidance, expecting continued triple-digit growth in data center as Blackwell architecture ramps in H2 2025."
+  },
+  {
+    "ticker": "NVDA",
+    "date": "2024-11-01",
+    "headline": "NVIDIA Blackwell GPUs Begin Production, Orders Exceed Supply",
+    "summary": "NVIDIA confirmed Blackwell B100 and B200 GPUs entered volume production, with initial shipments to cloud service providers including Microsoft, Google, and Amazon. Orders reportedly exceed available supply through 2025, with customers securing multi-billion dollar commitments. The B200 offers 5x performance improvement over H100 for large language model training, with significantly improved power efficiency. Analysts expect Blackwell to drive $50-70B in incremental revenue over the next 18 months."
+  },
+  {
+    "ticker": "NVDA",
+    "date": "2024-10-05",
+    "headline": "NVIDIA Faces Export Restrictions on Advanced AI Chips to China",
+    "summary": "The U.S. government expanded export controls on NVIDIA's most advanced AI chips to China and certain other countries. NVIDIA developed compliant versions (H20) with reduced performance, though volumes and margins are lower than unrestricted products. Management estimates the restrictions impact 20-25% of Data Center revenue, primarily offset by increased demand in other regions. The company is diversifying geographic exposure and accelerating growth in Europe and Middle East markets."
+  },
+  {
+    "ticker": "GOOGL",
+    "date": "2024-10-29",
+    "headline": "Alphabet Q4 Results Beat on Search and Cloud Growth",
+    "summary": "Alphabet reported Q4 revenue of $86.31B, up 13% YoY, with Google Search & Other revenue growing 12% to $49.4B. Google Cloud reached $11.4B (up 35% YoY) with operating margin expanding to 17% from 11% YoY, driven by scale and AI product adoption. YouTube advertising revenue grew 12% to $8.9B despite macro headwinds. Operating margin expanded to 32% company-wide, reflecting cost discipline following 2023 restructuring. Management highlighted AI-driven improvements in search relevance and ad targeting."
+  },
+  {
+    "ticker": "GOOGL",
+    "date": "2024-10-15",
+    "headline": "Google Gemini 2.0 Launches with Enhanced Multimodal Capabilities",
+    "summary": "Google unveiled Gemini 2.0, its most advanced AI model featuring native multimodal understanding (text, image, video, audio, code). Benchmarks show Gemini 2.0 Ultra outperforming GPT-4 on key metrics including MMLU, math reasoning, and coding tasks. The model is integrated across Google products including Search, Workspace, and Cloud Platform. Google Cloud is offering Gemini API access with aggressive pricing to compete with OpenAI and Anthropic."
+  },
+  {
+    "ticker": "GOOGL",
+    "date": "2024-09-18",
+    "headline": "DOJ Antitrust Case Focuses on Search Distribution Agreements",
+    "summary": "The U.S. Department of Justice concluded hearings in its antitrust case against Google's search business, focusing on exclusivity payments to Apple and other distribution partners. DOJ seeks to prohibit such agreements, which could impact Google's default search placement on Safari and other browsers. Management maintains these agreements are voluntary and benefit consumers. Potential remedies range from behavioral restrictions to structural separation, with a ruling expected in Q1 2025."
+  },
+  {
+    "ticker": "AMZN",
+    "date": "2024-11-01",
+    "headline": "Amazon Q4 Revenue Hits $159B, AWS Growth Accelerates",
+    "summary": "Amazon reported Q4 revenue of $158.88B, up 11% YoY, with operating income of $16.8B (10.6% margin), up from $13.2B YoY. AWS revenue grew 19% to $27.5B with operating margin of 38%, benefiting from optimization cycle completion and new AI workload adoption. North America retail operating margin reached 5.7%, up from 4.9% YoY, driven by improved fulfillment efficiency and third-party seller growth. International retail turned profitable for the first time with $500M operating income."
+  },
+  {
+    "ticker": "AMZN",
+    "date": "2024-10-20",
+    "headline": "Amazon Invests $10B in AI Infrastructure, Custom Chip Development",
+    "summary": "Amazon announced $10B investment in AI infrastructure including new data centers and custom silicon development (Trainium, Inferentia chips) to reduce reliance on Nvidia GPUs. AWS is positioning Trainium2 as cost-effective alternative for LLM training, claiming 50% better price-performance than GPU-based solutions. Major customers including Anthropic, Stability AI, and Hugging Face are adopting AWS custom chips for production workloads."
+  },
+  {
+    "ticker": "AMZN",
+    "date": "2024-09-28",
+    "headline": "Amazon Advertising Revenue Approaches $50B Annual Run Rate",
+    "summary": "Amazon's advertising business reached a $49B annual run rate, making it the third-largest digital advertising platform after Google and Meta. Sponsored Products grew 24% YoY with particular strength in grocery, fashion, and electronics categories. Amazon is expanding Prime Video ad-supported tier and integrating ads into Freevee and Twitch platforms. Advertising operating margin estimated at 50-55%, contributing significantly to overall profitability."
+  },
+  {
+    "ticker": "META",
+    "date": "2024-10-30",
+    "headline": "Meta Q4 Revenue Grows 23%, Reality Labs Losses Narrow",
+    "summary": "Meta reported Q4 revenue of $40.11B, up 23% YoY, driven by 25% growth in advertising impressions and improved pricing. Family of Apps (Facebook, Instagram, WhatsApp) daily active people reached 3.29B, up 7% YoY. Reality Labs posted $4.5B operating loss, down from $5.2B YoY, with Quest 3 and Ray-Ban Meta smart glasses exceeding sales expectations. Operating margin expanded to 46% from 40% YoY due to efficiency improvements. Management guided 2025 capex of $37-40B for AI infrastructure and Reality Labs investments."
+  },
+  {
+    "ticker": "META",
+    "date": "2024-10-12",
+    "headline": "Meta AI Llama 4 Model Released, Open Source Strategy Continues",
+    "summary": "Meta released Llama 4, its most capable open-source AI model, with 450B parameters and performance competitive with proprietary models from OpenAI and Google. The model is free for commercial use under Meta's open-source license, supporting Meta's strategy to commoditize foundation models and maintain advantage in distribution. Over 500K developers have downloaded Llama models, with integrations across cloud providers. Meta is monetizing through improved ad targeting and new AI features in core apps."
+  },
+  {
+    "ticker": "META",
+    "date": "2024-09-25",
+    "headline": "Instagram Reels Monetization Improves, Closing Gap with TikTok",
+    "summary": "Instagram Reels now drives over 50% of time spent on Instagram, with monetization efficiency reaching 90% of Feed and Stories rates, up from 70% six months ago. Advertisers are increasing Reels budgets due to improved conversion rates and measurement tools. Meta AI integration enables automated creative generation and performance prediction. Management expects Reels to be neutral to overall monetization by mid-2025, eliminating previous headwind to revenue growth."
+  },
+  {
+    "ticker": "TSLA",
+    "date": "2024-11-20",
+    "headline": "Tesla Q4 Deliveries Reach 475K, Margin Pressures Persist",
+    "summary": "Tesla reported Q4 FY2024 revenue of $25.17B with deliveries of 475K vehicles, in line with guidance but below earlier optimism for 500K+. Automotive gross margin (ex-credits) declined to 18.2% from 19.8% YoY due to pricing actions and unfavorable model mix. Energy Storage deployed record 8.7 GWh, growing 100% YoY with strong Megapack demand from utilities. Free cash flow improved to $2.7B despite lower margins. Management reaffirmed FY2025 volume growth of 20-30% pending Cybertruck ramp and next-gen vehicle launch."
+  },
+  {
+    "ticker": "TSLA",
+    "date": "2024-10-10",
+    "headline": "Tesla Unveils Cybercab Autonomous Robotaxi, Production Targeted for 2026",
+    "summary": "At Tesla's 'We, Robot' event, Elon Musk unveiled Cybercab, a purpose-built autonomous vehicle without steering wheel or pedals, targeting sub-$30K pricing. Production slated for 2026 pending regulatory approval. Tesla claims Full Self-Driving (FSD) version 13 achieves human-level safety metrics, though third-party validation pending. Analysts skeptical of timeline given regulatory hurdles and technical challenges. Robotaxi economics projected at $0.20/mile operating cost vs $1-2/mile for human-driven rides."
+  },
+  {
+    "ticker": "TSLA",
+    "date": "2024-09-15",
+    "headline": "Tesla Energy Business Reaches $6B Annual Revenue Run Rate",
+    "summary": "Tesla Energy, encompassing solar, Powerwall, and Megapack products, has grown to $6B annual revenue with 25% operating margins. Megapack backlog extends beyond 18 months with major contracts from utilities and commercial customers for grid-scale storage. The business is now larger than Tesla's Services segment and growing faster than Automotive. Management highlighted Energy as key margin driver, with operating margins expected to reach 30% as production scales at the new Megafactory in Lathrop, CA."
+  }
+]
