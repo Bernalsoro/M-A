@@ -1,7 +1,7 @@
 """
 Financial RAG Agent - Streamlit Web Application
 
-Interactive web interface for the Financial RAG Agent.
+Interactive web interface for the Financial RAG Agent with in-app API key configuration.
 """
 
 import streamlit as st
@@ -18,6 +18,8 @@ try:
     from financial_rag_agent.ingestion.loader import DataLoader
     from financial_rag_agent.retrieval.vector_store import build_vector_store_from_news
     from financial_rag_agent.llm.llm_client import LLMClient
+    from financial_rag_agent.agents.tools import FinancialTools
+    from financial_rag_agent.agents.planner import AgentPlanner
 except ImportError as e:
     st.error(f"Error importing modules: {e}")
     st.stop()
@@ -46,12 +48,6 @@ st.markdown("""
         text-align: center;
         margin-bottom: 2rem;
     }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 0.5rem 0;
-    }
     .tool-badge {
         background-color: #e1f5ff;
         padding: 0.2rem 0.5rem;
@@ -60,55 +56,64 @@ st.markdown("""
         display: inline-block;
         font-size: 0.9rem;
     }
-    .api-key-input {
-        font-family: monospace;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # Initialize session state
-if "agent" not in st.session_state:
-    st.session_state.agent = None
-if "system_initialized" not in st.session_state:
-    st.session_state.system_initialized = False
+if "data_initialized" not in st.session_state:
+    st.session_state.data_initialized = False
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 if "llm_provider" not in st.session_state:
     st.session_state.llm_provider = "openai"
+if "llm_model" not in st.session_state:
+    st.session_state.llm_model = "gpt-4o-mini"
+if "llm_connected" not in st.session_state:
+    st.session_state.llm_connected = False
 
 
+@st.cache_resource
 def initialize_data_layer():
-    """Initialize data layer (cached) - separate from agent."""
+    """Initialize data layer (cached) - only runs once."""
     try:
         loader = DataLoader()
         news = loader.load_news()
         vector_store = build_vector_store_from_news(news, save=False)
         tickers = loader.get_tickers()
-        return loader, vector_store, tickers, True
+        return loader, vector_store, tickers
     except Exception as e:
-        st.error(f"Failed to initialize data layer: {e}")
-        return None, None, [], False
+        st.error(f"Failed to initialize data: {e}")
+        return None, None, []
 
 
-def create_agent(api_key=None, provider="openai"):
-    """Create agent with optional API key."""
+def create_agent_with_key(api_key, provider, model):
+    """Create agent with specific API key and configuration."""
     try:
-        # Set environment variable if API key provided
-        if api_key:
-            if provider == "openai":
-                os.environ["OPENAI_API_KEY"] = api_key
-                os.environ["LLM_PROVIDER"] = "openai"
-            elif provider == "anthropic":
-                os.environ["ANTHROPIC_API_KEY"] = api_key
-                os.environ["LLM_PROVIDER"] = "anthropic"
+        # Create LLM client with explicit API key
+        llm_client = LLMClient(
+            provider=provider,
+            model=model,
+            api_key=api_key if api_key else None,
+            temperature=0.1,
+            max_tokens=2048
+        )
 
-        # Create agent
-        agent = FinancialAgent()
-        return agent, True
+        # Create agent with this LLM client
+        tools = FinancialTools()
+        planner = AgentPlanner()
+
+        agent = FinancialAgent(
+            tools=tools,
+            planner=planner,
+            llm_client=llm_client,
+            enable_planning=True
+        )
+
+        return agent
     except Exception as e:
-        st.error(f"Failed to create agent: {e}")
-        return None, False
+        st.error(f"Error creating agent: {e}")
+        return None
 
 
 def format_answer(result):
@@ -136,13 +141,6 @@ def format_answer(result):
         if tools:
             tools_html = " ".join([f'<span class="tool-badge">{tool}</span>' for tool in tools])
             st.markdown(tools_html, unsafe_allow_html=True)
-        else:
-            st.info("No tools were used")
-
-        # Show plan
-        if "plan" in result:
-            st.markdown("**Execution Plan:**")
-            st.json(result["plan"])
 
         # Show retrieved documents
         if "tool_results" in result and "retrieve_context" in result["tool_results"]:
@@ -150,11 +148,8 @@ def format_answer(result):
             if context_result.get("success") and context_result.get("documents"):
                 st.markdown("**Retrieved Documents:**")
                 for i, doc in enumerate(context_result["documents"][:3], 1):
-                    with st.container():
-                        st.markdown(f"**{i}. {doc.get('headline', 'N/A')}**")
-                        st.caption(f"Ticker: {doc.get('ticker')} | Date: {doc.get('date')} | Score: {doc.get('score', 0):.3f}")
-                        with st.expander("View summary"):
-                            st.write(doc.get("summary", ""))
+                    st.markdown(f"**{i}. {doc.get('headline', 'N/A')}**")
+                    st.caption(f"Ticker: {doc.get('ticker')} | Date: {doc.get('date')} | Score: {doc.get('score', 0):.3f}")
 
 
 def main():
@@ -164,138 +159,143 @@ def main():
     st.markdown('<div class="main-header">📊 Financial RAG Agent</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">AI-Powered Financial Analysis with RAG & Agents</div>', unsafe_allow_html=True)
 
-    # Initialize data layer (always needed, cached)
-    if not st.session_state.system_initialized:
-        with st.spinner("Initializing data layer..."):
-            loader, vector_store, tickers, success = initialize_data_layer()
-            if success:
+    # Initialize data layer
+    if not st.session_state.data_initialized:
+        with st.spinner("Initializing Financial RAG Agent..."):
+            loader, vector_store, tickers = initialize_data_layer()
+            if loader and vector_store:
                 st.session_state.loader = loader
                 st.session_state.vector_store = vector_store
                 st.session_state.tickers = tickers
-                st.session_state.system_initialized = True
+                st.session_state.data_initialized = True
             else:
-                st.error("❌ Failed to initialize system. Please refresh the page.")
+                st.error("❌ Failed to initialize. Please refresh.")
                 st.stop()
 
     # Sidebar
     with st.sidebar:
-        st.header("🔑 LLM Configuration")
-
-        # API Key input
-        st.markdown("**Enter your API Key:**")
+        st.header("🔑 API Configuration")
 
         # Provider selection
         provider = st.selectbox(
-            "Provider",
+            "LLM Provider",
             ["openai", "anthropic"],
-            index=0 if st.session_state.llm_provider == "openai" else 1,
+            index=0,
             help="Select your LLM provider"
-        )
-
-        # API Key input
-        api_key_input = st.text_input(
-            "API Key" if provider == "openai" else "API Key",
-            value=st.session_state.api_key,
-            type="password",
-            placeholder="sk-..." if provider == "openai" else "sk-ant-...",
-            help=f"Enter your {provider.upper()} API key",
-            key="api_key_input"
         )
 
         # Model selection
         if provider == "openai":
-            model = st.selectbox(
-                "Model",
-                ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
-                help="gpt-4o-mini is cheapest (~$0.15/1M tokens)"
-            )
-            if model:
-                os.environ["OPENAI_MODEL"] = model
+            model_options = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+            default_idx = 0
+            help_text = "gpt-4o-mini is cheapest (~$0.15/1M tokens)"
         else:
-            model = st.selectbox(
-                "Model",
-                ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229"],
-                help="Claude models for financial analysis"
-            )
-            if model:
-                os.environ["ANTHROPIC_MODEL"] = model
+            model_options = ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229"]
+            default_idx = 0
+            help_text = "Claude models for analysis"
 
-        # Apply button
-        if st.button("🔄 Apply API Key", type="primary", use_container_width=True):
-            if api_key_input and api_key_input.strip():
-                st.session_state.api_key = api_key_input.strip()
-                st.session_state.llm_provider = provider
+        model = st.selectbox(
+            "Model",
+            model_options,
+            index=default_idx,
+            help=help_text
+        )
 
-                # Create new agent with API key
-                with st.spinner("Connecting to LLM..."):
-                    agent, success = create_agent(st.session_state.api_key, provider)
-                    if success:
-                        st.session_state.agent = agent
-                        st.success(f"✅ Connected to {provider.upper()}!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Failed to connect. Check your API key.")
-            else:
-                st.warning("Please enter an API key")
+        # API Key input
+        api_key = st.text_input(
+            "API Key",
+            value=st.session_state.api_key,
+            type="password",
+            placeholder="sk-..." if provider == "openai" else "sk-ant-...",
+            help=f"Your {provider.upper()} API key"
+        )
 
-        # Clear API key button
-        if st.session_state.api_key:
-            if st.button("🗑️ Clear API Key", use_container_width=True):
+        # Connect button
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔌 Connect", type="primary", use_container_width=True):
+                if api_key and api_key.strip():
+                    st.session_state.api_key = api_key.strip()
+                    st.session_state.llm_provider = provider
+                    st.session_state.llm_model = model
+                    st.session_state.llm_connected = True
+                    st.success("✅ API key saved!")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ Please enter an API key")
+
+        with col2:
+            if st.button("🔌 Disconnect", use_container_width=True):
                 st.session_state.api_key = ""
-                st.session_state.agent = None
+                st.session_state.llm_connected = False
+                st.info("🔓 Disconnected")
                 st.rerun()
 
-        # LLM Status
+        # Status display
         st.markdown("---")
-        st.markdown("**🤖 LLM Status:**")
+        st.markdown("**🤖 Status:**")
 
-        if st.session_state.agent:
-            status = st.session_state.agent.get_status()
-            if status["llm"]["available"]:
-                st.success(f"✅ Connected: {status['llm']['provider']} - {status['llm']['model']}")
-            else:
-                st.warning("⚠️ Mock Mode - Add API key for real responses")
+        if st.session_state.llm_connected and st.session_state.api_key:
+            st.success(f"✅ {st.session_state.llm_provider.upper()}")
+            st.caption(f"Model: {st.session_state.llm_model}")
         else:
-            st.info("ℹ️ No API key configured - Using mock mode")
-            st.caption("Mock mode works but gives pre-written responses. Add your API key above for real AI answers.")
+            st.info("ℹ️ Mock Mode")
+            st.caption("Add API key for real responses")
+
+        # Instructions
+        with st.expander("ℹ️ Get API Key"):
+            if provider == "openai":
+                st.markdown("""
+                **OpenAI API Key:**
+                1. Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+                2. Sign up or log in
+                3. Click "Create new secret key"
+                4. Copy and paste above
+
+                **Cost:** ~$0.15 per 1M tokens (very cheap!)
+                """)
+            else:
+                st.markdown("""
+                **Anthropic API Key:**
+                1. Visit [console.anthropic.com](https://console.anthropic.com/)
+                2. Sign up or log in
+                3. Get your API key
+                4. Copy and paste above
+                """)
 
         st.markdown("---")
 
-        # Ticker selection
-        st.header("⚙️ Query Settings")
+        # Query settings
+        st.header("⚙️ Settings")
+
         ticker = st.selectbox(
-            "Select Ticker (Optional)",
+            "Ticker (Optional)",
             ["None"] + st.session_state.tickers,
-            help="Select a specific company or leave as 'None' for general questions"
+            help="Select a company"
         )
         if ticker == "None":
             ticker = None
 
         st.markdown("---")
 
-        # Example questions
-        st.header("💡 Example Questions")
+        # Examples
+        st.header("💡 Examples")
 
         examples = {
-            "Single Company Analysis": [
-                "What are the key financial highlights for Apple?",
-                "How is Microsoft's cloud business performing?",
-                "Analyze NVIDIA's recent earnings results"
+            "📊 Analysis": [
+                "What are Apple's key financial metrics?",
+                "How is Microsoft's cloud business?",
+                "Analyze NVIDIA's recent earnings"
             ],
-            "Comparative Analysis": [
-                "Compare Apple and Microsoft's profitability metrics",
+            "⚖️ Compare": [
+                "Compare Apple vs Microsoft profitability",
                 "Which has better margins: Google or Meta?",
-                "Compare NVDA and AMZN growth rates"
+                "NVDA vs AMZN growth comparison"
             ],
-            "Risk Analysis": [
-                "What are the main risks facing Tesla?",
-                "Identify key challenges for NVIDIA",
-                "What are the financial risks for Amazon?"
-            ],
-            "Growth & Trends": [
-                "Analyze Tesla's growth trajectory",
-                "How are AI investments impacting tech companies?",
-                "What's driving revenue growth for these companies?"
+            "⚠️ Risks": [
+                "What are Tesla's main risks?",
+                "NVIDIA's key challenges?",
+                "Amazon's financial risks?"
             ]
         }
 
@@ -305,98 +305,70 @@ def main():
                     if st.button(q, key=q, use_container_width=True):
                         st.session_state.example_question = q
 
-        st.markdown("---")
-
-        # System status
-        st.header("📊 System Status")
-        st.metric("Vector Store Docs", len(st.session_state.get("tickers", [])) * 3)
-        st.metric("Available Tickers", len(st.session_state.get("tickers", [])))
-
-        # Get API key info
-        st.markdown("---")
-        with st.expander("ℹ️ How to get API keys"):
-            st.markdown("""
-            **OpenAI (Recommended):**
-            1. Go to [platform.openai.com](https://platform.openai.com/api-keys)
-            2. Sign up / Log in
-            3. Create new secret key
-            4. Copy and paste above
-
-            **Cost:** ~$0.15 per 1M tokens (very cheap!)
-
-            **Anthropic:**
-            1. Go to [console.anthropic.com](https://console.anthropic.com/)
-            2. Sign up / Log in
-            3. Get API key
-            4. Copy and paste above
-            """)
-
-    # Main content area
+    # Main area
     st.header("🤔 Ask a Question")
 
-    # Check if there's an example question
-    default_question = st.session_state.get("example_question", "")
-
     # Question input
+    default_q = st.session_state.get("example_question", "")
     question = st.text_area(
-        "Enter your financial question:",
-        value=default_question,
+        "Your question:",
+        value=default_q,
         height=100,
-        placeholder="E.g., What are Apple's key financial metrics and recent performance highlights?"
+        placeholder="e.g., What are Apple's key financial highlights?"
     )
 
-    # Clear example question after using it
-    if default_question:
+    if default_q:
         st.session_state.example_question = ""
 
-    # Submit button
-    col1, col2, col3 = st.columns([1, 1, 4])
-
+    # Buttons
+    col1, col2 = st.columns([1, 5])
     with col1:
-        submit = st.button("🚀 Ask Agent", type="primary", use_container_width=True)
-
+        ask_btn = st.button("🚀 Ask", type="primary", use_container_width=True)
     with col2:
-        clear = st.button("🗑️ Clear", use_container_width=True)
-
-    if clear:
-        st.rerun()
+        if st.button("🗑️ Clear", use_container_width=True):
+            st.rerun()
 
     # Process question
-    if submit:
+    if ask_btn:
         if not question:
-            st.error("Please enter a question!")
+            st.error("❌ Please enter a question")
         else:
-            # Create agent if not exists
-            if not st.session_state.agent:
-                with st.spinner("Initializing agent..."):
-                    agent, success = create_agent(st.session_state.api_key, st.session_state.llm_provider)
-                    if success:
-                        st.session_state.agent = agent
+            with st.spinner("🤖 Thinking..."):
+                try:
+                    # Create agent with current configuration
+                    agent = create_agent_with_key(
+                        st.session_state.api_key if st.session_state.llm_connected else None,
+                        st.session_state.llm_provider,
+                        st.session_state.llm_model
+                    )
 
-            if st.session_state.agent:
-                with st.spinner("🤖 Agent is thinking..."):
-                    try:
-                        result = st.session_state.agent.answer(ticker=ticker, question=question)
+                    if agent:
+                        result = agent.answer(ticker=ticker, question=question)
 
                         if result.get("success", True):
                             format_answer(result)
-                        else:
-                            st.error(f"❌ Error: {result.get('error', 'Unknown error')}")
 
-                    except Exception as e:
-                        st.error(f"❌ An error occurred: {str(e)}")
-                        with st.expander("Show error details"):
-                            st.exception(e)
-            else:
-                st.error("Failed to initialize agent. Please check configuration.")
+                            # Show LLM mode
+                            if result.get("llm_available"):
+                                st.success("✅ Response from real LLM")
+                            else:
+                                st.warning("⚠️ Mock response (add API key for real AI)")
+                        else:
+                            st.error(f"❌ Error: {result.get('error')}")
+                    else:
+                        st.error("❌ Failed to create agent")
+
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+                    with st.expander("Details"):
+                        st.exception(e)
 
     # Footer
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #666; font-size: 0.9rem;">
-        <p><strong>Financial RAG Agent v0.1.0</strong> | Built with Streamlit & AI</p>
-        <p>💡 <strong>Tip:</strong> Add your OpenAI/Anthropic API key in the sidebar for real AI responses!</p>
-        <p>⚠️ This is a demonstration system with synthetic data. Not for actual investment decisions.</p>
+    <div style="text-align: center; color: #666;">
+        <p><b>Financial RAG Agent v0.1.0</b> | AI-Powered Analysis</p>
+        <p>⚠️ Demo system with synthetic data - Not for investment decisions</p>
     </div>
     """, unsafe_allow_html=True)
 
