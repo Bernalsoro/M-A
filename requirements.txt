@@ -18,6 +18,11 @@ seaborn>=0.11.2
 # Optional: For financial data
 yfinance>=0.1.70
 
+# RAG DD Agent dependencies
+sentence-transformers>=2.2.0
+openai>=1.0.0
+pypdf>=3.0.0
+
 # Development dependencies (optional)
 pytest>=7.0.0
 pytest-cov>=3.0.0
