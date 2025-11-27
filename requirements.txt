@@ -1,5 +1,5 @@
 # Requirements for Streamlit Cloud deployment
-# Financial RAG Agent
+# Financial RAG Agent - Lightweight version
 
 # Core dependencies
 streamlit>=1.28.0
@@ -8,11 +8,12 @@ streamlit>=1.28.0
 pandas>=2.0.0
 numpy>=1.24.0
 
-# ML and embeddings
-torch>=2.0.0,<2.5.0
-sentence-transformers>=2.5.0
-faiss-cpu>=1.7.4
-transformers>=4.30.0
+# ML and embeddings - DISABLED for Streamlit Cloud (too heavy)
+# Uses fallback keyword-based search instead of semantic embeddings
+# torch>=2.0.0,<2.5.0
+# sentence-transformers>=2.5.0
+# faiss-cpu>=1.7.4
+# transformers>=4.30.0
 
 # LLM clients (optional - will work in mock mode without API keys)
 openai>=1.0.0

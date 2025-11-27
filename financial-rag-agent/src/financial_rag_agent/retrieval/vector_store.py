@@ -2,6 +2,7 @@
 Vector store implementation using FAISS for semantic search.
 
 Handles embedding creation, indexing, and similarity search over financial documents.
+Falls back to keyword-based search if sentence-transformers is not available.
 """
 
 import json
@@ -10,13 +11,26 @@ import pickle
 from pathlib import Path
 from typing import Any
 
-import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from financial_rag_agent.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Optional imports - gracefully degrade if not available
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    logger.warning("faiss-cpu not available - will use fallback search")
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    logger.warning("sentence-transformers not available - will use fallback search")
 
 
 class VectorStore:
@@ -46,6 +60,14 @@ class VectorStore:
         # Store metadata for each indexed document
         self.documents: list[dict[str, Any]] = []
         self.doc_ids: list[int] = []
+
+        # Check if dependencies are available
+        if not SENTENCE_TRANSFORMERS_AVAILABLE or not FAISS_AVAILABLE:
+            logger.info("📋 Dependencies not available - using fallback mode (keyword search)")
+            self.fallback_mode = True
+            self.encoder = None
+            self.index = None
+            return
 
         # Initialize sentence transformer with error handling
         try:
@@ -223,13 +245,18 @@ class VectorStore:
         Args:
             path: Directory path to save index and metadata
         """
+        if self.fallback_mode:
+            logger.info("Fallback mode active - skipping save (no index to save)")
+            return
+
         save_path = path or self.index_path
         save_path.mkdir(parents=True, exist_ok=True)
 
         # Save FAISS index
-        index_file = save_path / "faiss.index"
-        faiss.write_index(self.index, str(index_file))
-        logger.info(f"Saved FAISS index to {index_file}")
+        if FAISS_AVAILABLE and self.index:
+            index_file = save_path / "faiss.index"
+            faiss.write_index(self.index, str(index_file))
+            logger.info(f"Saved FAISS index to {index_file}")
 
         # Save documents and metadata
         metadata = {
@@ -253,6 +280,10 @@ class VectorStore:
         Returns:
             True if loaded successfully, False otherwise
         """
+        if self.fallback_mode:
+            logger.info("Fallback mode active - skipping load")
+            return False
+
         load_path = path or self.index_path
 
         index_file = load_path / "faiss.index"
@@ -260,6 +291,10 @@ class VectorStore:
 
         if not index_file.exists() or not metadata_file.exists():
             logger.warning(f"Vector store files not found at {load_path}")
+            return False
+
+        if not FAISS_AVAILABLE:
+            logger.warning("FAISS not available - cannot load index")
             return False
 
         try:
@@ -284,7 +319,8 @@ class VectorStore:
 
     def clear(self) -> None:
         """Clear all documents from the vector store."""
-        self.index = faiss.IndexFlatL2(self.dimension)
+        if not self.fallback_mode and FAISS_AVAILABLE:
+            self.index = faiss.IndexFlatL2(self.dimension)
         self.documents = []
         self.doc_ids = []
         logger.info("Vector store cleared")
@@ -301,12 +337,19 @@ class VectorStore:
         Returns:
             Dictionary with statistics
         """
-        return {
+        stats = {
             "num_documents": self.size,
             "dimension": self.dimension,
-            "embedding_model": self.embedding_model_name,
-            "index_size_mb": self.index.ntotal * self.dimension * 4 / (1024 * 1024),
+            "embedding_model": self.embedding_model_name if not self.fallback_mode else "keyword-search",
+            "mode": "fallback" if self.fallback_mode else "vector-search",
         }
+
+        if not self.fallback_mode and self.index:
+            stats["index_size_mb"] = self.index.ntotal * self.dimension * 4 / (1024 * 1024)
+        else:
+            stats["index_size_mb"] = 0
+
+        return stats
 
 
 def build_vector_store_from_news(
