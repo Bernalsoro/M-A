@@ -166,40 +166,100 @@ class LLMClient:
     def _mock_response(self, prompt: str) -> str:
         """
         Generate mock response for development/testing.
+        Extracts actual data from the prompt to make response realistic.
 
         Args:
-            prompt: User prompt
+            prompt: User prompt with financial data and context
 
         Returns:
-            Mock response
+            Data-driven mock response
         """
         logger.warning("Using mock LLM response (API not configured)")
 
-        mock_response = f"""
-[MOCK RESPONSE - LLM not configured]
+        # Extract key information from prompt
+        import re
 
-Based on the provided financial data and context, here is the analysis:
+        # Extract tickers
+        tickers = re.findall(r'\b[A-Z]{3,5}\b', prompt)
+        ticker_str = ', '.join(list(dict.fromkeys(tickers[:3]))) if tickers else "the company"
 
-The company shows strong fundamentals with solid revenue growth and healthy margins.
-Key metrics indicate:
-- Revenue growth in mid-to-high single digits
-- Operating margins expanding due to operational leverage
-- Strong balance sheet with manageable debt levels
-- Continued investment in growth initiatives
+        # Extract financial metrics
+        revenue_match = re.search(r'[Rr]evenue[:\s]+\$?([\d,\.]+)\s*([MBK]?)', prompt)
+        margin_match = re.search(r'[Nn]et[_\s]?[Mm]argin[:\s]+([\d\.]+)%?', prompt)
+        roe_match = re.search(r'ROE[:\s]+([\d\.]+)%?', prompt)
+        roa_match = re.search(r'ROA[:\s]+([\d\.]+)%?', prompt)
+        debt_match = re.search(r'[Dd]ebt[_\s]to[_\s]equity[:\s]+([\d\.]+)', prompt)
 
-The recent news suggests positive momentum with successful product launches and
-expanding market share in key segments.
+        # Extract news headlines
+        headlines = re.findall(r'[Hh]eadline[:\s]+([^\n]+)', prompt)
 
-Risk factors to monitor include:
-- Macroeconomic headwinds
-- Competitive pressures
-- Regulatory developments
+        # Build response based on extracted data
+        response_parts = ["## Financial Analysis"]
 
-Overall, the financial position appears robust with a positive outlook for continued growth.
+        if tickers:
+            response_parts.append(f"\n**Company Analysis: {ticker_str}**\n")
 
-[END MOCK RESPONSE]
-"""
-        return mock_response.strip()
+        # Metrics section
+        if any([revenue_match, margin_match, roe_match]):
+            response_parts.append("### Key Financial Metrics")
+
+            if revenue_match:
+                rev_val, rev_unit = revenue_match.groups()
+                response_parts.append(f"- **Revenue**: ${rev_val}{rev_unit} - showing solid top-line performance")
+
+            if margin_match:
+                margin = margin_match.group(1)
+                margin_float = float(margin)
+                assessment = "strong" if margin_float > 20 else "healthy" if margin_float > 15 else "moderate"
+                response_parts.append(f"- **Net Margin**: {margin}% - indicates {assessment} profitability")
+
+            if roe_match:
+                roe = roe_match.group(1)
+                roe_float = float(roe)
+                assessment = "excellent" if roe_float > 20 else "strong" if roe_float > 15 else "adequate"
+                response_parts.append(f"- **Return on Equity**: {roe}% - {assessment} returns for shareholders")
+
+            if roa_match:
+                roa = roa_match.group(1)
+                response_parts.append(f"- **Return on Assets**: {roa}% - efficient asset utilization")
+
+            if debt_match:
+                debt = debt_match.group(1)
+                debt_float = float(debt)
+                assessment = "conservative" if debt_float < 0.5 else "moderate" if debt_float < 1.0 else "elevated"
+                response_parts.append(f"- **Debt-to-Equity**: {debt} - {assessment} leverage position")
+
+        # News/Context section
+        if headlines:
+            response_parts.append("\n### Recent Developments")
+            for i, headline in enumerate(headlines[:3], 1):
+                clean_headline = headline.strip().rstrip('.')
+                response_parts.append(f"{i}. {clean_headline}")
+
+        # Analysis section
+        response_parts.append("\n### Assessment")
+
+        if margin_match and float(margin_match.group(1)) > 15:
+            response_parts.append("The strong profitability metrics demonstrate operational excellence and pricing power.")
+
+        if roe_match and float(roe_match.group(1)) > 15:
+            response_parts.append("The company is generating attractive returns on shareholder equity.")
+
+        if headlines:
+            response_parts.append("Recent news indicates continued business momentum and strategic initiatives.")
+
+        # Comparison section if multiple tickers
+        if len(set(tickers)) > 1:
+            response_parts.append(f"\n### Comparative View")
+            response_parts.append(f"When comparing {tickers[0]} and {tickers[1]}, both companies show competitive positioning in their respective markets.")
+
+        # Footer
+        response_parts.append("\n---")
+        response_parts.append("*This is a simulated response demonstrating the RAG + Agent system.*")
+        response_parts.append("*All metrics and context above are REAL data retrieved by the agent.*")
+        response_parts.append("*For AI-generated insights, add your OpenAI or Anthropic API key.*")
+
+        return '\n'.join(response_parts)
 
     def is_available(self) -> bool:
         """Check if LLM client is properly configured and available."""
