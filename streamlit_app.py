@@ -102,10 +102,18 @@ def initialize_data_layer():
         loader = DataLoader()
         news = loader.load_news()
         vector_store = build_vector_store_from_news(news, save=False)
+
+        # Check if vector store is in fallback mode
+        if vector_store and vector_store.fallback_mode:
+            st.warning("⚠️ **Note:** Vector embeddings unavailable (using keyword search). All other features work normally!")
+
         tickers = loader.get_tickers()
         return loader, vector_store, tickers
     except Exception as e:
-        st.error(f"Failed to initialize: {e}")
+        st.error(f"❌ Failed to initialize data layer: {e}")
+        import traceback
+        with st.expander("Show error details"):
+            st.code(traceback.format_exc())
         return None, None, []
 
 def create_agent_with_key(api_key, provider, model):
@@ -127,8 +135,11 @@ def create_agent_with_key(api_key, provider, model):
         agent = FinancialAgent(tools=tools, planner=planner, llm_client=llm_client, enable_planning=True)
         return agent
     except Exception as e:
-        st.error(f"⚠️ Error creating agent: {e}")
-        st.info("💡 Tip: The agent will work in Mock Mode without an API key.")
+        st.error(f"⚠️ **Error creating agent:** {e}")
+        import traceback
+        with st.expander("Show error details"):
+            st.code(traceback.format_exc())
+        st.info("💡 **Tip:** This might be a model loading issue. Try refreshing the page or check if Streamlit Cloud has enough memory.")
         return None
 
 def main():
@@ -269,6 +280,10 @@ def main():
                         result = agent.answer(ticker=ticker, question=question)
                     except Exception as e:
                         st.error(f"❌ Error during analysis: {e}")
+                        import traceback
+                        with st.expander("Show error details"):
+                            st.code(traceback.format_exc())
+                        st.info("💡 **Tip:** This error might be due to model loading issues. The app should still work in Mock Mode.")
                         st.session_state.run_analysis = False
                         return
 

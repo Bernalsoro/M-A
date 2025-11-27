@@ -39,26 +39,38 @@ class VectorStore:
         self.embedding_model_name = embedding_model or settings.embedding_model
         self.dimension = dimension or settings.embedding_dimension
         self.index_path = index_path or settings.vector_store_path
-
-        # Initialize sentence transformer
-        logger.info(f"Loading embedding model: {self.embedding_model_name}")
-        self.encoder = SentenceTransformer(self.embedding_model_name)
-
-        # Verify dimension matches model
-        test_embedding = self.encoder.encode(["test"])
-        actual_dim = test_embedding.shape[1]
-        if actual_dim != self.dimension:
-            logger.warning(
-                f"Configured dimension {self.dimension} doesn't match model output {actual_dim}"
-            )
-            self.dimension = actual_dim
-
-        # Initialize FAISS index (L2 distance)
-        self.index = faiss.IndexFlatL2(self.dimension)
+        self.encoder = None
+        self.index = None
+        self.fallback_mode = False
 
         # Store metadata for each indexed document
         self.documents: list[dict[str, Any]] = []
         self.doc_ids: list[int] = []
+
+        # Initialize sentence transformer with error handling
+        try:
+            logger.info(f"Loading embedding model: {self.embedding_model_name}")
+            self.encoder = SentenceTransformer(self.embedding_model_name)
+
+            # Verify dimension matches model
+            test_embedding = self.encoder.encode(["test"])
+            actual_dim = test_embedding.shape[1]
+            if actual_dim != self.dimension:
+                logger.warning(
+                    f"Configured dimension {self.dimension} doesn't match model output {actual_dim}"
+                )
+                self.dimension = actual_dim
+
+            # Initialize FAISS index (L2 distance)
+            self.index = faiss.IndexFlatL2(self.dimension)
+            logger.info("✅ Vector store initialized successfully")
+
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to load embedding model: {e}")
+            logger.warning("🔄 Running in fallback mode (keyword-based search)")
+            self.fallback_mode = True
+            self.encoder = None
+            self.index = None
 
     def add_documents(self, documents: list[dict[str, Any]], text_key: str = "text") -> None:
         """
@@ -69,6 +81,16 @@ class VectorStore:
             text_key: Key in document dict containing text to embed
         """
         logger.info(f"Adding {len(documents)} documents to vector store")
+
+        # Store documents anyway (for fallback search)
+        start_id = len(self.documents)
+        self.documents.extend(documents)
+        self.doc_ids.extend(range(start_id, start_id + len(documents)))
+
+        # If in fallback mode, skip embeddings
+        if self.fallback_mode:
+            logger.info(f"📋 Fallback mode: {len(self.documents)} documents stored (no embeddings)")
+            return
 
         # Extract texts
         texts = [doc[text_key] for doc in documents]
@@ -81,11 +103,6 @@ class VectorStore:
 
         # Add to FAISS index
         self.index.add(embeddings.astype(np.float32))
-
-        # Store documents and IDs
-        start_id = len(self.documents)
-        self.documents.extend(documents)
-        self.doc_ids.extend(range(start_id, start_id + len(documents)))
 
         logger.info(f"Vector store now contains {len(self.documents)} documents")
 
@@ -103,8 +120,16 @@ class VectorStore:
         Returns:
             List of documents with scores
         """
-        if self.index.ntotal == 0:
+        if len(self.documents) == 0:
             logger.warning("Vector store is empty")
+            return []
+
+        # Fallback mode: simple keyword matching
+        if self.fallback_mode:
+            return self._fallback_search(query, top_k, score_threshold)
+
+        if self.index.ntotal == 0:
+            logger.warning("FAISS index is empty")
             return []
 
         # Create query embedding
@@ -131,6 +156,64 @@ class VectorStore:
             results.append(doc)
 
         logger.info(f"Found {len(results)} documents for query")
+        return results
+
+    def _fallback_search(
+        self, query: str, top_k: int = 5, score_threshold: float | None = None
+    ) -> list[dict[str, Any]]:
+        """
+        Fallback search using simple keyword matching.
+
+        Args:
+            query: Query text
+            top_k: Number of results to return
+            score_threshold: Minimum similarity score (optional)
+
+        Returns:
+            List of documents with scores
+        """
+        logger.info(f"🔍 Fallback search for: {query[:50]}...")
+
+        query_lower = query.lower()
+        query_words = set(query_lower.split())
+
+        # Score documents by keyword overlap
+        scored_docs = []
+        for doc in self.documents:
+            # Get text from document
+            text = doc.get("text", "")
+            if not text:
+                text = f"{doc.get('headline', '')} {doc.get('summary', '')}"
+
+            text_lower = text.lower()
+            text_words = set(text_lower.split())
+
+            # Calculate overlap score
+            overlap = len(query_words & text_words)
+            if overlap > 0:
+                # Bonus for ticker match
+                ticker_bonus = 0
+                if "ticker" in doc:
+                    for word in query_words:
+                        if word.upper() == doc["ticker"]:
+                            ticker_bonus = 5
+                            break
+
+                score = (overlap + ticker_bonus) / max(len(query_words), 1)
+                doc_copy = doc.copy()
+                doc_copy["score"] = min(score, 0.95)  # Cap at 0.95
+                scored_docs.append(doc_copy)
+
+        # Sort by score
+        scored_docs.sort(key=lambda x: x["score"], reverse=True)
+
+        # Apply threshold and limit
+        results = []
+        for doc in scored_docs[:top_k]:
+            if score_threshold is None or doc["score"] >= score_threshold:
+                results.append(doc)
+
+        logger.info(f"📋 Fallback found {len(results)} documents")
         return results
 
     def save(self, path: Path | None = None) -> None:

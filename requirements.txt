@@ -9,8 +9,10 @@ pandas>=2.0.0
 numpy>=1.24.0
 
 # ML and embeddings
-sentence-transformers>=2.2.0
+torch>=2.0.0,<2.5.0
+sentence-transformers>=2.5.0
 faiss-cpu>=1.7.4
+transformers>=4.30.0
 
 # LLM clients (optional - will work in mock mode without API keys)
 openai>=1.0.0
