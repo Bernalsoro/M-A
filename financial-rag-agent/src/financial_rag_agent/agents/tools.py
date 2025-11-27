@@ -21,11 +21,17 @@ logger = logging.getLogger(__name__)
 class FinancialTools:
     """Collection of tools for financial analysis."""
 
-    def __init__(self):
-        """Initialize tools with required components."""
-        self.loader = DataLoader()
+    def __init__(self, loader: DataLoader | None = None, retriever: FinancialRetriever | None = None):
+        """
+        Initialize tools with required components.
+
+        Args:
+            loader: DataLoader instance (creates new one if not provided)
+            retriever: FinancialRetriever instance (creates new one if not provided)
+        """
+        self.loader = loader or DataLoader()
         self.preprocessor = FinancialPreprocessor()
-        self.retriever = FinancialRetriever()
+        self.retriever = retriever or FinancialRetriever()
 
         # Cache processed data to avoid recomputation
         self._processed_data = None

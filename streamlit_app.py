@@ -17,6 +17,7 @@ try:
     from financial_rag_agent.agents.agent import FinancialAgent
     from financial_rag_agent.ingestion.loader import DataLoader
     from financial_rag_agent.retrieval.vector_store import build_vector_store_from_news
+    from financial_rag_agent.retrieval.retriever import FinancialRetriever
     from financial_rag_agent.llm.llm_client import LLMClient
     from financial_rag_agent.agents.tools import FinancialTools
     from financial_rag_agent.agents.planner import AgentPlanner
@@ -116,8 +117,8 @@ def initialize_data_layer():
             st.code(traceback.format_exc())
         return None, None, []
 
-def create_agent_with_key(api_key, provider, model):
-    """Create agent with API key."""
+def create_agent_with_key(api_key, provider, model, loader, vector_store):
+    """Create agent with API key and initialized data."""
     try:
         # Treat empty string as None for mock mode
         effective_key = api_key.strip() if api_key else None
@@ -130,7 +131,13 @@ def create_agent_with_key(api_key, provider, model):
             temperature=0.1,
             max_tokens=2048
         )
-        tools = FinancialTools()
+
+        # Create retriever with the vector store
+        retriever = FinancialRetriever(vector_store=vector_store)
+
+        # Create tools with loader and retriever
+        tools = FinancialTools(loader=loader, retriever=retriever)
+
         planner = AgentPlanner()
         agent = FinancialAgent(tools=tools, planner=planner, llm_client=llm_client, enable_planning=True)
         return agent
@@ -261,11 +268,13 @@ def main():
             question = st.session_state.question
             ticker = st.session_state.get("ticker", None)
 
-            # Create agent
+            # Create agent with initialized data
             agent = create_agent_with_key(
                 st.session_state.api_key,
                 st.session_state.llm_provider,
-                st.session_state.llm_model
+                st.session_state.llm_model,
+                st.session_state.loader,
+                st.session_state.vector_store
             )
 
             if not agent:
