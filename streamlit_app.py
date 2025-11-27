@@ -90,6 +90,10 @@ if "llm_provider" not in st.session_state:
     st.session_state.llm_provider = "openai"
 if "llm_model" not in st.session_state:
     st.session_state.llm_model = "gpt-4o-mini"
+if "question" not in st.session_state:
+    st.session_state.question = ""
+if "selected_ticker" not in st.session_state:
+    st.session_state.selected_ticker = "None"
 
 @st.cache_resource
 def initialize_data_layer():
@@ -107,10 +111,14 @@ def initialize_data_layer():
 def create_agent_with_key(api_key, provider, model):
     """Create agent with API key."""
     try:
+        # Treat empty string as None for mock mode
+        effective_key = api_key.strip() if api_key else None
+        effective_key = effective_key if effective_key else None
+
         llm_client = LLMClient(
             provider=provider,
             model=model,
-            api_key=api_key if api_key else None,
+            api_key=effective_key,
             temperature=0.1,
             max_tokens=2048
         )
@@ -119,13 +127,18 @@ def create_agent_with_key(api_key, provider, model):
         agent = FinancialAgent(tools=tools, planner=planner, llm_client=llm_client, enable_planning=True)
         return agent
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"⚠️ Error creating agent: {e}")
+        st.info("💡 Tip: The agent will work in Mock Mode without an API key.")
         return None
 
 def main():
     # Header
     st.markdown('<div class="big-title">🤖 Financial RAG Agent</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">See RAG + Agents in Action - Step by Step</div>', unsafe_allow_html=True)
+
+    # Show mode indicator
+    if not st.session_state.api_key.strip():
+        st.info("🎭 **Mock Mode**: The agent is working with simulated AI responses. Real financial data and RAG retrieval are active. Add an API key in the sidebar for real AI-generated analysis.")
 
     # Initialize
     if not st.session_state.data_initialized:
@@ -160,10 +173,11 @@ def main():
 
         st.markdown("---")
         st.markdown("**Status:**")
-        if st.session_state.api_key:
-            st.success(f"✅ {provider.upper()}")
+        if st.session_state.api_key.strip():
+            st.success(f"✅ {provider.upper()} Connected")
         else:
-            st.info("ℹ️ Mock Mode")
+            st.info("ℹ️ Mock Mode Active")
+            st.caption("Using simulated responses. Add API key for real AI analysis.")
 
         st.markdown("---")
         st.header("📊 System Info")
@@ -181,15 +195,31 @@ def main():
     with col1:
         st.header("💬 Your Question")
 
-        ticker = st.selectbox("Company (optional)", ["None"] + st.session_state.tickers)
+        ticker = st.selectbox(
+            "Company (optional)",
+            ["None"] + st.session_state.tickers,
+            index=0 if st.session_state.selected_ticker == "None" else (
+                st.session_state.tickers.index(st.session_state.selected_ticker) + 1
+                if st.session_state.selected_ticker in st.session_state.tickers else 0
+            ),
+            key="ticker_select"
+        )
         if ticker == "None":
             ticker = None
+        else:
+            st.session_state.selected_ticker = ticker
 
         question = st.text_area(
             "Ask anything:",
+            value=st.session_state.question,
             height=150,
-            placeholder="e.g., What are Apple's key financial metrics and recent performance?"
+            placeholder="e.g., What are Apple's key financial metrics and recent performance?",
+            key="question_input"
         )
+
+        # Update session state when question changes
+        if question != st.session_state.question:
+            st.session_state.question = question
 
         # Quick examples
         st.caption("**Quick Examples:**")
@@ -202,14 +232,14 @@ def main():
         cols = st.columns(3)
         for idx, (label, q) in enumerate(examples.items()):
             with cols[idx]:
-                if st.button(label, use_container_width=True):
-                    question = q
+                if st.button(label, use_container_width=True, key=f"example_{idx}"):
+                    st.session_state.question = q
+                    st.session_state.run_analysis = False  # Reset analysis state
                     st.rerun()
 
         if st.button("🚀 ANALYZE", type="primary", use_container_width=True):
-            if question:
+            if st.session_state.question.strip():
                 st.session_state.run_analysis = True
-                st.session_state.question = question
                 st.session_state.ticker = ticker
                 st.rerun()
 
@@ -218,7 +248,7 @@ def main():
 
         if "run_analysis" in st.session_state and st.session_state.run_analysis:
             question = st.session_state.question
-            ticker = st.session_state.ticker
+            ticker = st.session_state.get("ticker", None)
 
             # Create agent
             agent = create_agent_with_key(
@@ -227,12 +257,20 @@ def main():
                 st.session_state.llm_model
             )
 
-            if agent:
+            if not agent:
+                st.error("❌ Failed to create agent. Please check the logs above.")
+                st.session_state.run_analysis = False
+            else:
                 # STEP 1: Planning
                 st.markdown('<div class="step-box">📋 STEP 1: PLANNING</div>', unsafe_allow_html=True)
                 with st.spinner("Agent is analyzing your question..."):
                     time.sleep(0.5)
-                    result = agent.answer(ticker=ticker, question=question)
+                    try:
+                        result = agent.answer(ticker=ticker, question=question)
+                    except Exception as e:
+                        st.error(f"❌ Error during analysis: {e}")
+                        st.session_state.run_analysis = False
+                        return
 
                 plan = result.get("plan", {})
                 st.markdown(f"""
